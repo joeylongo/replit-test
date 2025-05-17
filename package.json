@@ -9,6 +9,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "create-react-app": "^5.1.0"
+    "@llamaindex/ollama": "^0.1.5",
+    "axios": "^1.9.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "create-react-app": "^5.1.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "llamaindex": "^0.10.6",
+    "tsx": "^4.19.4"
   }
 }

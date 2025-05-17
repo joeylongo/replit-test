@@ -36,3 +36,12 @@
     transform: rotate(360deg);
   }
 }
+
+.MuiBox-root {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+.MuiTypography-root {
+  margin-bottom: 0px !important;
+}

@@ -1,4 +1,4 @@
-import Reac, { useState } from 'react';
+import Reac, { useState, useCallback, useEffect } from 'react';
 import { IconButton, Stack, Box, Grid, Typography, Divider, Button, Paper, TextField } from '@mui/material';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import LoadingOverlay from './LoadingOverlay'
@@ -7,7 +7,8 @@ const SalesforceRecordView = () => {
   const [record, setRecord] = useState({})
   const [loading, setLoading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
-  const [files, setFiles] = useState([])
+  const [imageFiles, setImageFiles] = useState([])
+
 
   const setExecutionDetails = (input) => {
     const _record = { ...record }
@@ -16,13 +17,14 @@ const SalesforceRecordView = () => {
   }
 
   const reset = () => {
-    setFiles([])
+    setRecord({})
+    setImageFiles([])
   }
 
   const onMagicWand = async () => {
     setLoading(true)
     try {
-      const images = files.map(f => f.split('base64,')[1])
+      const images = imageFiles.map(f => f.split('base64,')[1])
       const res = await fetch("http://localhost:3002/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,14 +45,14 @@ const SalesforceRecordView = () => {
         partial = events.pop() || "";
 
         for (const event of events) {
-          console.log('got an event', event)
           if (event.startsWith("data:")) {
             const json = JSON.parse(event.replace(/^data: /, ""));
-            console.log('json', json)
             if (json?.data) {
               setExecutionDetails(json?.data?.replace(/^"|"$/g, ''))
-              reset()
               console.log('event result:', json.data)
+            }
+            if (json?.message) {
+              console.log('Got message:', json.message)
             }
           }
         }
@@ -79,17 +81,25 @@ const SalesforceRecordView = () => {
   ];
 
   const leftActivityDetailsFields = [
+    { label: 'Promo Type', multiline: false },
     { label: 'Pricing', multiline: false },
+    { label: 'EDV', multiline: false },
     { label: 'Channel', multiline: false },
     { label: 'POI', multiline: false },
-  ];
-
-  const rightActivityDetailsFields = [
     {
       label: 'Execution Details', multiline: true, icon: <IconButton onClick={onMagicWand} sx={{ p: 0 }}>
         <AutoFixHighIcon fontSize="small" color="primary" />
       </IconButton>
     },
+  ];
+
+  const rightActivityDetailsFields = [
+    { label: 'Purchase Quantity', multiline: false },
+    { label: 'Get Quantity', multiline: false },
+    { label: 'Save', multiline: false },
+    { label: 'Promo Offer', multiline: false },
+    { label: 'Package Detail', multiline: false },
+    { label: 'Promotion Summary', multiline: true },
   ];
 
   function fileToDataURL(file) {
@@ -101,35 +111,58 @@ const SalesforceRecordView = () => {
     });
   }
 
+  function fileToUtf8(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () =>
+        reject(new Error(reader.error?.message ?? 'Failed to read file'));
+      reader.readAsText(file, 'utf-8');      // ← key line
+    });
+  }
 
   const handleDrop = async (e) => {
     e.preventDefault();
-    setIsDragging(false);
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) {
-      const _files = [...files]
-      const encoded = await fileToDataURL(droppedFile)
-      _files.push(encoded)
-      setFiles(_files)
+    setIsDragging();
+    const droppedFiles = e.dataTransfer.imageFiles?.length ? e.dataTransfer.imageFiles : e.dataTransfer.files;
+    if (droppedFiles?.length) {
+      if (e.target.id === 'filedrop') {
+        const _imageFiles = [...imageFiles]
+        for(const imgfile of droppedFiles) {
+          const encoded = await fileToDataURL(imgfile)
+          _imageFiles.push(encoded)
+        }
+        setImageFiles(_imageFiles)
+      }
+
+      if (e.target.id === 'datadrop') {
+        const _jsonFile = await fileToUtf8(droppedFiles[0])
+        const parsed = JSON.parse(_jsonFile)
+        setRecord(parsed)
+      }
     }
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
-    setIsDragging(true);
+    setIsDragging(e.target.id);
   };
   const handleDragLeave = () => {
-    setIsDragging(false);
+    setIsDragging();
   };
 
-  const handleChange = (e) => {
+  useEffect(() => {
+    console.log('record', record)
+  }, [record])
+
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target
     const _record = { ...record }
     _record[name] = value
     setRecord(_record)
-  }
+  }, [record])
 
-  const renderFieldGroup = (fields) => (
+  const renderFieldGroup = useCallback((fields) => (
     fields.map(({ label, multiline, icon }) => (
       <Box
         key={label}
@@ -152,17 +185,22 @@ const SalesforceRecordView = () => {
           name={label}
           onChange={handleChange}
           variant='standard'
-          value={record[label]}
+          value={record[label] || ''}
           multiline={multiline}
         />
       </Box>
     ))
-  );
+  ), [record, handleChange]);
 
   return (
-    <Paper elevation={1} sx={{ p: 2, width: '90%', mx: 'auto', mt: 2 }}>
+    <Paper elevation={1} sx={{ p: 2, width: '90%', mx: 'auto', mt: 2, marginBottom: '200px' }}>
       <LoadingOverlay open={loading} />
-      <Typography variant="h6" fontWeight={600} gutterBottom sx={{ textAlign: 'left', backgroundColor: 'rgb(0,0,0,0.1)', paddingLeft: 2 }}>
+      <Typography id='datadrop' variant="h6" fontWeight={600} gutterBottom
+        sx={{ textAlign: 'left', backgroundColor: 'rgb(0,0,0,0.1)', paddingLeft: 2, border: isDragging === 'datadrop' ? '2px dashed blue' : undefined }}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
         Activity Types and Dates
       </Typography>
       <Grid container spacing={1} sx={{ width: '100%', marginBottom: 4 }}>
@@ -173,7 +211,8 @@ const SalesforceRecordView = () => {
           {renderFieldGroup(rightActivityFields)}
         </Grid>
         <Grid item xs={6} md={6}
-          sx={{ flexBasis: '32%', minHeight: '300px', border: isDragging ? '2px dashed blue' : undefined }}
+          id='filedrop'
+          sx={{ flexBasis: '32%', minHeight: '300px', border: isDragging === 'filedrop' ? '2px dashed blue' : undefined }}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -182,7 +221,7 @@ const SalesforceRecordView = () => {
             <Typography variant="body2" fontWeight={600} gutterBottom sx={{ textAlign: 'left' }}>
               Execute Images
             </Typography>
-            {files.map(file => {
+            {imageFiles.map(file => {
               return <Box
                 component="img"
                 src={file}
@@ -205,10 +244,10 @@ const SalesforceRecordView = () => {
       </Typography>
 
       <Grid container spacing={1} sx={{ width: '100%', marginBottom: 4 }}>
-        <Grid item xs={8} sm={8} md={8} lg={8} xl={8} sx={{ flexBasis: '48%' }}>
+        <Grid item xs={8} sm={8} md={8} lg={8} xl={8} sx={{ flexBasis: '32%' }}>
           {renderFieldGroup(leftActivityDetailsFields)}
         </Grid>
-        <Grid item xs={8} sm={8} md={8} lg={8} xl={8} sx={{ flexBasis: '48%' }}>
+        <Grid item xs={8} sm={8} md={8} lg={8} xl={8} sx={{ flexBasis: '32%' }}>
           {renderFieldGroup(rightActivityDetailsFields)}
         </Grid>
       </Grid>
@@ -217,6 +256,7 @@ const SalesforceRecordView = () => {
           Edit
         </Button>
       </Box> */}
+      <Button onClick={() => setRecord({})}>Clear</Button>
     </Paper>
   );
 };

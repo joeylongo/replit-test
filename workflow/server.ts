@@ -27,6 +27,8 @@ app.post("/api/chat", async (req, res) => {
   res.end();
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🧠 RAG server running at http://localhost:${PORT}`);
 });
+
+server.timeout = 300000;

@@ -3,24 +3,16 @@ import {
   StartEvent,
   StopEvent,
   WorkflowEvent,
-  SummaryIndex,
   HandlerContext,
 } from "llamaindex";
 import { Workflow } from "@llamaindex/workflow";
 import axios from "axios";
-import { Ollama } from "@llamaindex/ollama";
 import ollama from 'ollama'
-import { Settings } from "llamaindex";
 import imageContext from './contexts/imageContext'
 import getExecutionDetailsContext from './contexts/executionDetails'
+import { systemPrompt } from './contexts/systemContext'
 
 const separator = () => console.log('=========================================================')
-const llm = new Ollama({
-  // model: "research-phi3",
-  // model: "phi3:3.8b",
-  // model: "llama3.2:latest",
-  model: 'qwen3:latest'
-});
 // Create a custom event type
 export class GenerateExecutionDetailsEvent extends WorkflowEvent<{
   picosData: string;
@@ -47,22 +39,22 @@ export function stripThinking(markup: string): string {
     .trim();
 }
 
-const CHAT_SOURCE: string = 'remote'
+const CHAT_SOURCE: string = 'local'
 
-const chat = async (prompt: string, images?: string[]) => {
+const chat = async (systemPrompt: string, userPrompt: string, images?: string[]) => {
   if(CHAT_SOURCE === 'local') {
     const res = await ollama.chat({
-      model: 'qwen2.5vl',
-      messages: [{
-        role: 'user',
-        content: prompt,
-        images
-      }]
+      model: 'gemma3:4b',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt, images }
+      ]
     })
-    return res
+    return res.message.content
   } else {
     const { data } = await axios.post('http://Adams-Mac-Studio.local:3000/chat', {
-      prompt,
+      systemPrompt,
+      userPrompt,
       images
     })
     return data.result.message.content
@@ -74,14 +66,15 @@ const generateExecutionDetails = async (
   ev: ExecutionDetailsEvent
 ) => {
   const {record, imageSummary} = ev.data
+  const keyValues = jsonToPlainText(record);
+  const userPrompt = getExecutionDetailsContext(keyValues, imageSummary)
 
-  const prompt = getExecutionDetailsContext(jsonToPlainText(record), imageSummary)
+  console.log(systemPrompt);
+  console.log(userPrompt);
+  separator();
 
-  console.log(prompt)
-  separator()
-
-  const stripped = await chat(prompt)
-  separator()
+  const stripped = await chat(systemPrompt, userPrompt); 
+  separator();
   return new StopEvent(stripped);
 };
 

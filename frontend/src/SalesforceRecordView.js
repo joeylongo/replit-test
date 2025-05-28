@@ -66,6 +66,7 @@ const SalesforceRecordView = () => {
 
   const leftActivityFields = [
     { label: 'Activity Name' },
+    { label: 'Id' },
     { label: 'Start Date' },
     { label: 'End Date' },
     { label: 'Exclude Package Details' },
@@ -121,6 +122,33 @@ const SalesforceRecordView = () => {
     });
   }
 
+  function mapSalesforceRecord(record) {
+  return {
+    "Activity Name": record.Activity_Name__c + '',
+    "Id": record.Id + '',
+    "Activity Type": record.Activity_type__c + '',
+    Pricing: record.Pricing__c + '',
+    "Start Date": record.Start_Date__c + '',
+    "End Date": record.End_Date__c + '',
+    "Get Quantity": record.Get_Quantity__c + '',
+    "Promo Offer": record.Promo_Offer__c + '',
+    EDV: record.EDV__c + '',
+    Channel: record.Channel_Picklist__c + '',
+    POI: record.POI_Picklist__c + '',
+    Save: record.Save_Quantity__c + '',
+    "Price Type": record.Price_Type__c + '',
+    "Purchase Quantity": record.Purchase_Quantity__c + '',
+    "Market Street Challenge": record.Market_Street_Challenge__c ? 'Yes' : 'No',
+    "Late-break": record.Late_break__c  ? 'Yes' : 'No',
+    "Exclude Package Details": "Yes",
+    "Promo Type": record.Promo_Type__c + '',
+    "% Of Stores": record.Of_Stores__c + '',
+    "Package Detail": record.Package_Detail__c + '',
+    "Promotion Summary": record.Packaging_Comments__c,
+    "Execution Details": record.Product_Price_Execution_Direction__c || ''
+  };
+}
+
   const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragging();
@@ -138,7 +166,7 @@ const SalesforceRecordView = () => {
       if (e.target.id === 'datadrop') {
         const _jsonFile = await fileToUtf8(droppedFiles[0])
         const parsed = JSON.parse(_jsonFile)
-        setRecord(parsed)
+        setRecord(mapSalesforceRecord(parsed))
       }
     }
   };
@@ -185,9 +213,11 @@ const SalesforceRecordView = () => {
           name={label}
           onChange={handleChange}
           variant='standard'
-          value={record[label] || ''}
+          value={label === 'Execution Details' ? '' : record[label] || ''}
           multiline={multiline}
+          // dangerouslySetInnerHTML={{__html: record[label] || ''}}
         />
+        {label === 'Execution Details' && <div dangerouslySetInnerHTML={{__html: record[label] || ''}}></div>}
       </Box>
     ))
   ), [record, handleChange]);

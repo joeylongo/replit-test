@@ -25,3 +25,10 @@ ${imageSummary}`
 //   - "Powerade 12oz 8pack $4.88 (20% Margin). Action Alley, Grocery Cart Rail, or Grocery End Cap. Display in 100% of stores. Use March Madness POS on displays. Include all 4 SKUs on Displays"
 //   - "MSC BBIso Sell in BodyArmor Shipper Place in High Traffic location 28oz LYTE & 1L SW Shipper 5 cases 28oz Peach Mango LYTE & 4 cases 1L SportWater EDV: 28oz SD $3.29 or 2/$5 & 1L SportWater $2.99 or 2/$5 (1/1-12/31) Shippers on TAG"
  
+
+// I would also like you to figure out if there are discrepancies between info in the existing provided Execution Details
+// and the key value data from the salesforce record. For example, if the Promo Offer field says one thing but the Execution Details
+// describes a different promo value call it out. If there are any discrepancies, please respond with a "discrepancy"
+// property otherwise if it looks good, do not mention any discrepancies.
+// Only call out directly conflicting information (ex BOGO @ $1 vs BOGO @ $2). The informaiton can be worded different and not
+// be a discrepancy. If there is not any directly conflicting info, don't respond with discrepancies.

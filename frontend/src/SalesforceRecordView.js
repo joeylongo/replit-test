@@ -2,6 +2,8 @@ import Reac, { useState, useCallback, useEffect } from 'react';
 import { IconButton, Stack, Box, Grid, Typography, Divider, Button, Paper, TextField } from '@mui/material';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import LoadingOverlay from './LoadingOverlay'
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 const SalesforceRecordView = () => {
   const [record, setRecord] = useState({})
@@ -69,16 +71,16 @@ const SalesforceRecordView = () => {
     { label: 'Id' },
     { label: 'Start Date' },
     { label: 'End Date' },
-    { label: 'Exclude Package Details' },
-    { label: 'PicOS' },
+    // { label: 'Exclude Package Details' },
+    // { label: 'PicOS' },
   ];
   const rightActivityFields = [
     { label: 'Activity Type' },
     { label: 'Sell Enablers' },
     { label: '% Of Stores' },
     { label: 'Price Type' },
-    { label: 'Market Street Challenge' },
-    { label: 'Late-break' },
+    // { label: 'Market Street Challenge' },
+    // { label: 'Late-break' },
   ];
 
   const leftActivityDetailsFields = [
@@ -87,11 +89,6 @@ const SalesforceRecordView = () => {
     { label: 'EDV', multiline: false },
     { label: 'Channel', multiline: false },
     { label: 'POI', multiline: false },
-    {
-      label: 'Execution Details', multiline: true, icon: <IconButton onClick={onMagicWand} sx={{ p: 0 }}>
-        <AutoFixHighIcon fontSize="small" color="primary" />
-      </IconButton>
-    },
   ];
 
   const rightActivityDetailsFields = [
@@ -101,6 +98,15 @@ const SalesforceRecordView = () => {
     { label: 'Promo Offer', multiline: false },
     { label: 'Package Detail', multiline: false },
     { label: 'Promotion Summary', multiline: true },
+    { label: 'CCNA Marketing/Innovation Program Id', multiline: false },
+  ];
+
+  const farRightActivityDetailsFields = [
+    {
+      label: 'Execution Details', multiline: true, icon: <IconButton onClick={onMagicWand} sx={{ p: 0 }}>
+        <AutoFixHighIcon fontSize="small" color="primary" />
+      </IconButton>
+    },
   ];
 
   function fileToDataURL(file) {
@@ -123,31 +129,32 @@ const SalesforceRecordView = () => {
   }
 
   function mapSalesforceRecord(record) {
-  return {
-    "Activity Name": record.Activity_Name__c + '',
-    "Id": record.Id + '',
-    "Activity Type": record.Activity_type__c + '',
-    Pricing: record.Pricing__c + '',
-    "Start Date": record.Start_Date__c + '',
-    "End Date": record.End_Date__c + '',
-    "Get Quantity": record.Get_Quantity__c + '',
-    "Promo Offer": record.Promo_Offer__c + '',
-    EDV: record.EDV__c + '',
-    Channel: record.Channel_Picklist__c + '',
-    POI: record.POI_Picklist__c + '',
-    Save: record.Save_Quantity__c + '',
-    "Price Type": record.Price_Type__c + '',
-    "Purchase Quantity": record.Purchase_Quantity__c + '',
-    "Market Street Challenge": record.Market_Street_Challenge__c ? 'Yes' : 'No',
-    "Late-break": record.Late_break__c  ? 'Yes' : 'No',
-    "Exclude Package Details": "Yes",
-    "Promo Type": record.Promo_Type__c + '',
-    "% Of Stores": record.Of_Stores__c + '',
-    "Package Detail": record.Package_Detail__c + '',
-    "Promotion Summary": record.Packaging_Comments__c,
-    "Execution Details": record.Product_Price_Execution_Direction__c || ''
-  };
-}
+    return {
+      "Activity Name": record.Activity_Name__c + '',
+      "Id": record.Id + '',
+      "Activity Type": record.Activity_type__c + '',
+      Pricing: record.Pricing__c + '',
+      "Start Date": record.Start_Date__c + '',
+      "End Date": record.End_Date__c + '',
+      "Get Quantity": record.Get_Quantity__c + '',
+      "Promo Offer": record.Promo_Offer__c + '',
+      EDV: record.EDV__c + '',
+      Channel: record.Channel_Picklist__c + '',
+      POI: record.POI_Picklist__c + '',
+      Save: record.Save_Quantity__c + '',
+      "Price Type": record.Price_Type__c + '',
+      "Purchase Quantity": record.Purchase_Quantity__c + '',
+      "Market Street Challenge": record.Market_Street_Challenge__c ? 'Yes' : 'No',
+      "Late-break": record.Late_break__c ? 'Yes' : 'No',
+      "Exclude Package Details": "Yes",
+      "Promo Type": record.Promo_Type__c + '',
+      "% Of Stores": record.Of_Stores__c + '',
+      "Package Detail": record.Package_Detail__c + '',
+      "Promotion Summary": record.Packaging_Comments__c,
+      "Execution Details": record.Product_Price_Execution_Direction__c || '',
+      "CCNA Marketing/Innovation Program Id": record.CCNA_Marketing_or_Innovation_Program__c || '',
+    };
+  }
 
   const handleDrop = async (e) => {
     e.preventDefault();
@@ -156,7 +163,7 @@ const SalesforceRecordView = () => {
     if (droppedFiles?.length) {
       if (e.target.id === 'filedrop') {
         const _imageFiles = [...imageFiles]
-        for(const imgfile of droppedFiles) {
+        for (const imgfile of droppedFiles) {
           const encoded = await fileToDataURL(imgfile)
           _imageFiles.push(encoded)
         }
@@ -209,15 +216,28 @@ const SalesforceRecordView = () => {
           &nbsp;
           {icon}
         </Stack>
-        <TextField
+        {label !== 'Execution Details' && <TextField
           name={label}
           onChange={handleChange}
           variant='standard'
-          value={label === 'Execution Details' ? '' : record[label] || ''}
+          value={record[label] || ''}
           multiline={multiline}
-          // dangerouslySetInnerHTML={{__html: record[label] || ''}}
-        />
-        {label === 'Execution Details' && <div dangerouslySetInnerHTML={{__html: record[label] || ''}}></div>}
+        />}
+        {label === 'Execution Details' && <ReactQuill
+          value={record[label] || ''} onChange={(value) => {
+            handleChange({
+              target: {
+                name: 'Execution Details',
+                value
+              }
+            })
+          }}
+        />}
+        {/* {label === 'Execution Details' && <div>
+        Formatted Execution Details<br />
+        -----
+        <div dangerouslySetInnerHTML={{__html: record[label] || ''}}></div>
+        </div>} */}
       </Box>
     ))
   ), [record, handleChange]);
@@ -280,6 +300,10 @@ const SalesforceRecordView = () => {
         <Grid item xs={8} sm={8} md={8} lg={8} xl={8} sx={{ flexBasis: '32%' }}>
           {renderFieldGroup(rightActivityDetailsFields)}
         </Grid>
+        <Grid item xs={8} sm={8} md={8} lg={8} xl={8} sx={{ flexBasis: '32%' }}>
+          {renderFieldGroup(farRightActivityDetailsFields)}
+        </Grid>
+
       </Grid>
       {/* <Box sx={{ textAlign: 'center', mt: 4 }}>
         <Button variant="contained" color="primary">

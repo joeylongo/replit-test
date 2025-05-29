@@ -11,6 +11,7 @@ import ollama from 'ollama'
 import imageContext from './contexts/imageContext'
 import getExecutionDetailsContext from './contexts/executionDetails'
 import { systemPrompt } from './contexts/systemContext'
+import picosSystemPrompt from './contexts/picosSystemPrompt'
 
 const separator = () => console.log('=========================================================')
 // Create a custom event type
@@ -41,14 +42,16 @@ export function stripThinking(markup: string): string {
 
 const CHAT_SOURCE: string = 'local'
 
-const chat = async (systemPrompt: string, userPrompt: string, images?: string[]) => {
+const chat = async (systemPrompt: string, userPrompt: string, images?: string[], format?: any) => {
   if(CHAT_SOURCE === 'local') {
     const res = await ollama.chat({
       model: 'gemma3:4b',
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: picosSystemPrompt() },
+        // { role: 'system', content: systemPrompt + '\n\n' + picosSystemPrompt() },
         { role: 'user', content: userPrompt, images }
-      ]
+      ],
+      format
     })
     return res.message.content
   } else {
@@ -73,9 +76,21 @@ const generateExecutionDetails = async (
   console.log(userPrompt);
   separator();
 
-  const stripped = await chat(systemPrompt, userPrompt); 
+  const stripped = await chat(systemPrompt, userPrompt, [], {
+    type: "object",
+    properties: {
+      discrepancies: {
+        type: 'string'
+      },
+      executionDetails: {
+        type: "string",
+      },
+    },
+    required: ["executionDetails"],
+  }); 
+  console.log('stripped', stripped)
   separator();
-  return new StopEvent(stripped);
+  return new StopEvent(JSON.parse(stripped).executionDetails);
 };
 
   // const analyzeImage = async (_: HandlerContext, ev: ImageEvent) => {

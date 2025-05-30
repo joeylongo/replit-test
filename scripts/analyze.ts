@@ -171,6 +171,9 @@ Do NOT put more than one product description in the Execution Details. If there 
 If the Execution Details already has a product description, you should not add a "Product:" description or explanation to the end of the execution details.
 
 **Guide to providing layman's terms and jargon to avoid**
+Normalize any product description to the clearest layman’s version. For example:
+- Normalize "SSD Core CAN 12oz x 355ml (12-pack) to "12-pack Core CAN display"
+Once normalized, do NOT rephrase or restate it again.
 Use the following guide to use layman's terms over acronymns and jargon. Do NOT use the following terms:
 - SSD: sparkling soft drink. You dont need to include SSD because people will know which brands are SSDs.
 - 12 x 355ml: You shouldn't simply copy the package types info directly. You must instead say "12 pack of Cans" since cans are always 355ml.
@@ -196,9 +199,14 @@ You must include only ONE product description in the Execution Details. If you m
 - 12-pack of 12oz cans
 - 12x355ml
 - Product: SSD Core CAN 12z/355m 12pk
-- Product: SSD Core CAN 12oz/355ml (12-pack).
+- Product: SSD Core CAN 12oz/355ml (12-pack)
 - 12-pack Core CAN display
 These are all the same thing. Choose ONE clear phrase, and DO NOT restate or rephrase the product description again. 👉 Repeating the product description in a different format is redundant and unprofessional.
+Any of the following patterns are considered the same and must NOT be repeated together:
+- Any phrase that begins with “Product: …”
+- Any phrase that contains “SSD Core CAN …”
+- Any phrase that ends with “pack of Cans”
+These all refer to the same concept. You MUST pick just one and use it once.
 
 Execution details need to be 265 characters or less (not counting HTML tags).
 Execution details may not include links or images, they are just a concise paragraph aimed at providing maximum execution direction in limited space.

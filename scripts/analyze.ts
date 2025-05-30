@@ -8,7 +8,7 @@ import {
 import { Workflow } from "@llamaindex/workflow";
 import axios from "axios";
 import ollama from "ollama";
-import samples from "../samples/datafiles/100-picos-samples.json";
+import samples from "../samples/datafiles/100-picos-samples 2.json";
 import { systemPrompt } from "../workflow/contexts/systemContext";
 import fs from 'fs'
 import { appendFile } from 'node:fs/promises';
@@ -165,6 +165,9 @@ You need to ensure that there is only one product description per activity. Thes
 - 20oz 8pack display
 - SSD: 12x355ml
 - SSD Core CAN 12x355ml 12pk
+- SSD Core CAN 12oz x 355ml (12-pack)
+Do NOT put more than one product description in the Execution Details. If there are multiple products, you should pick the most important one and use that as the product description.
+If the Execution Details already has a product description, you should not add a "Product:" description or explanation to the end of the execution details.
 
 **Guide to providing layman's terms and jargon to avoid**
 Use the following guide to use layman's terms over acronymns and jargon. Do NOT use the following terms:

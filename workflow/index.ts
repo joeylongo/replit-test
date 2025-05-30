@@ -45,7 +45,7 @@ const CHAT_SOURCE: string = 'local'
 const chat = async (systemPrompt: string, userPrompt: string, images?: string[], format?: any) => {
   if(CHAT_SOURCE === 'local') {
     const res = await ollama.chat({
-      model: 'gemma3:4b',
+      model: 'gemma3:12b',
       messages: [
         { role: 'system', content: picosSystemPrompt() },
         // { role: 'system', content: systemPrompt + '\n\n' + picosSystemPrompt() },

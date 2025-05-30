@@ -197,6 +197,7 @@ The Execution Details should refer to the Action Item Naming Conventions in the 
 You must include only ONE product description in the Execution Details. If you mention "12-pack Core CAN display" or similar once, DO NOT repeat it in another format later. This includes variations like:
 - SSD Core CAN 12oz x 355ml (12-pack)
 - 12-pack of 12oz cans
+- SSD Import GLS 12z/355m 1pk 24
 - 12x355ml
 - Product: SSD Core CAN 12z/355m 12pk
 - Product: SSD Core CAN 12oz/355ml (12-pack)
@@ -205,6 +206,7 @@ These are all the same thing. Choose ONE clear phrase, and DO NOT restate or rep
 Any of the following patterns are considered the same and must NOT be repeated together:
 - Any phrase that begins with “Product: …”
 - Any phrase that contains “SSD Core CAN …”
+- Any phrase that contains “SSD Import GLS …”
 - Any phrase that ends with “pack of Cans”
 These all refer to the same concept. You MUST pick just one and use it once.
 

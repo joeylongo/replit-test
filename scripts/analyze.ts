@@ -205,7 +205,8 @@ You must include only ONE product description in the Execution Details. If you m
 These are all the same thing. Choose ONE clear phrase, and DO NOT restate or rephrase the product description again. 👉 Repeating the product description in a different format is redundant and unprofessional.
 Any of the following patterns are considered the same and must NOT be repeated together:
 - Any phrase that begins with “Product: …”
-- Any phrase that contains “SSD Core CAN …”
+- Any phrase that begins with “SSD Core …”
+- Any phrase that begins with "12-pack Core …”
 - Any phrase that contains “SSD Import GLS …”
 - Any phrase that ends with “pack of Cans”
 These all refer to the same concept. You MUST pick just one and use it once.

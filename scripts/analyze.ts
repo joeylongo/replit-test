@@ -158,6 +158,14 @@ Pillar Programs:
   - FF: Fall Football
   - Hol: Holiday
 
+You need to ensure that there is only one product description per activity. These are some examples of product descriptions:
+- 12-pack Core CAN display
+- 20-pack Cans display
+- 6-pack Half Liters display
+- 20oz 8pack display
+- SSD: 12x355ml
+- SSD Core CAN 12x355ml 12pk
+
 **Guide to providing layman's terms and jargon to avoid**
 Use the following guide to use layman's terms over acronymns and jargon. Do NOT use the following terms:
 - SSD: sparkling soft drink. You dont need to include SSD because people will know which brands are SSDs.

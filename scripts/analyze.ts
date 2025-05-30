@@ -166,6 +166,7 @@ You need to ensure that there is only one product description per activity. Thes
 - SSD: 12x355ml
 - SSD Core CAN 12x355ml 12pk
 - SSD Core CAN 12oz x 355ml (12-pack)
+- Product: SSD Core CAN 12z/355m 12pk
 Do NOT put more than one product description in the Execution Details. If there are multiple products, you should pick the most important one and use that as the product description.
 If the Execution Details already has a product description, you should not add a "Product:" description or explanation to the end of the execution details.
 
@@ -174,17 +175,30 @@ Use the following guide to use layman's terms over acronymns and jargon. Do NOT 
 - SSD: sparkling soft drink. You dont need to include SSD because people will know which brands are SSDs.
 - 12 x 355ml: You shouldn't simply copy the package types info directly. You must instead say "12 pack of Cans" since cans are always 355ml.
 Here are some specific examples and how to improve them.
-1) Repetetive
-    - Bad example: "Execute 12-pack Core CAN display featuring SSD Core CAN 12oz x 355ml (12 pack) at $4.99. Deploy shelf talkers to the front of store/lobby. Utilize Simple Promo: 1 can for $4.99."
-    - Better example: "Execute 12-pack Core CAN display at $4.99. Deploy shelf talkers to the front of store/lobby. Utilize Simple Promo: 1 can for $4.99."
-2) Also repetetive
-    - Bad example: "Execute 12-pack Core CAN display at the front of store/lobby featuring SSD Core CAN 12oz/355ml 12pk. Implement shelf talkers with the $4.99 Simple Promo: 1 can for $4.99."
-    - Good example: "Execute 12-pack Core CAN display at the front of store/lobby. Implement shelf talkers with the $4.99 Simple Promo: 1 can for $4.99."
-
+1) Bad examples:
+    ❌ BAD: Execute 12-pack Core CAN display at the Front of Store/Lobby with SSD Core CAN 12oz x 355ml (12-pack). Implement shelf talkers with a $4.99 promo.
+    ❌ BAD: Execute 12-pack Core CAN display featuring SSD Core CAN 12oz x 355ml (12 pack) at $4.99. Deploy shelf talkers to the front of store/lobby. Utilize Simple Promo: 1 can for $4.99.
+    ❌ BAD: Execute 12-pack Core CAN display at the front of store/lobby featuring SSD Core CAN 12oz/355ml 12pk. Implement shelf talkers with the $4.99 Simple Promo: 1 can for $4.99.
+    ❌ BAD: Execute 12-pack Core CAN display at the Front of Store/Lobby with $4.99 Simple Promo: 1 can for $4.99. Deploy shelf talkers. Product: SSD Core CAN 12z/355m 12pk.
+2) Good examples:
+    ✅ GOOD: Execute 12-pack Core CAN display at the Front of Store/Lobby. Implement shelf talkers with a $4.99 promo.
+    ✅ GOOD: Execute 12-pack Core CAN display at $4.99. Deploy shelf talkers to the front of store/lobby. Utilize Simple Promo: 1 can for $4.99.
+    ✅ GOOD: Execute 12-pack Core CAN display at the front of store/lobby. Implement shelf talkers with the $4.99 Simple Promo: 1 can for $4.99.
+    ✅ GOOD: Execute 12-pack Core CAN display at the Front of Store/Lobby with $4.99 Simple Promo: 1 can for $4.99. Deploy shelf talkers.
 **Your job**
 Your job is to focus on what good "Execution Details" look like. Execution Details is another term for the Action Item verbiage or "execution direction" referred to in the guide above.
 The "“PicOS” Look of Success" section of the guide covers good execution details.
 The Execution Details should refer to the Action Item Naming Conventions in the guide where applicable. For example, if the activity is "Market Street Challenge" = Yes, then put "MSC" somwhere to track it.
+
+⚠️ CRITICAL RULE:
+You must include only ONE product description in the Execution Details. If you mention "12-pack Core CAN display" or similar once, DO NOT repeat it in another format later. This includes variations like:
+- SSD Core CAN 12oz x 355ml (12-pack)
+- 12-pack of 12oz cans
+- 12x355ml
+- Product: SSD Core CAN 12z/355m 12pk
+- Product: SSD Core CAN 12oz/355ml (12-pack).
+- 12-pack Core CAN display
+These are all the same thing. Choose ONE clear phrase, and DO NOT restate or rephrase the product description again. 👉 Repeating the product description in a different format is redundant and unprofessional.
 
 Execution details need to be 265 characters or less (not counting HTML tags).
 Execution details may not include links or images, they are just a concise paragraph aimed at providing maximum execution direction in limited space.

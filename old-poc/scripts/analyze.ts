@@ -8,11 +8,13 @@ import {
 import { Workflow } from "@llamaindex/workflow";
 import axios from "axios";
 import ollama from "ollama";
-import samples from "../samples/datafiles/100-picos-samples 2.json";
+import samples from "../samples/test-samples.json";
+import bicSamples from "../samples/P-000746_KROGER/100-picos-samples.json";
 import { systemPrompt } from "../workflow/contexts/systemContext";
-import fs from 'fs'
-import { appendFile } from 'node:fs/promises';
-
+import fs from "fs";
+import { appendFile } from "node:fs/promises";
+import linguist from "./linguist";
+import copywriter from "./copywriter";
 /**
  * stripHtmlTags
  * -------------
@@ -61,15 +63,14 @@ export function jsonToPlainText(obj: Record<string, unknown>): string {
 
 export async function appendCsvLine(
   filePath: string,
-  fields: unknown[],
+  fields: unknown[]
 ): Promise<void> {
-  const line = `${fields.join(',')}\n`;
-  await appendFile(filePath, line, 'utf8');
+  const line = `${fields.join(",")}\n`;
+  await appendFile(filePath, line, "utf8");
 }
 
-
-  // - Do not repeat information. Try to detect if an acronym or term is restating the same concept as another portion of the Execution Details.
-  //   For example: "12-pack Core CAN" means 12 pack of cans which are always 355ml. So adding: SSD: 12x355ml is confusing and repetetive.
+// - Do not repeat information. Try to detect if an acronym or term is restating the same concept as another portion of the Execution Details.
+//   For example: "12-pack Core CAN" means 12 pack of cans which are always 355ml. So adding: SSD: 12x355ml is confusing and repetetive.
 
 //   ** Please refer to these examples of excellent Execution Details **
 // - Execute: 6pk Half Liters at $Buy 2 Get 2 Free!!! (Incl. Core 5 +Add'| Flavors) Lobby and/or Primary Perimeter Display w/ Share A Coke POS. (MSC)(BBFC)
@@ -78,9 +79,9 @@ export async function appendCsvLine(
 // - Sell: Incremental Gold Peak 59oz Singles Perimeter Display at Net $2.49! {Buy 5 Save $5 MEGA}!! (Add KO Mini Cans, Half Liters, etc where applicable) Thru 5/27
 
 const go = async () => {
-  let csv = ''
-  let i = 0
-  let start = false
+  let csv = "";
+  let i = 0;
+  let start = false;
   for (const sample of samples) {
     // if(sample.Id === 'a15a6000001ilRRAAY') {
     //   start = true
@@ -90,8 +91,8 @@ const go = async () => {
     //   console.log('skipping',sample.Id)
     //   continue
     // }
-    i++
-    if(i > 20) break
+    i++;
+    if (i > 20) break;
     const otherSystemPrompt = `You are an AI agent with knowledge about how a beverage company relays promotion execution strategy to front line sales.
 The company has promotions which involve setting up special product displays in-store.
 You are in the execution enablement group which is responsible for keeping track of the promotions and articulating to front-line sales people about how to set up the displays.
@@ -255,16 +256,108 @@ Do not include any other commentary or reasoning.
       },
     });
 
-    const original = stripHtmlTags(sample.Product_Price_Execution_Direction__c)
-    const generated = stripHtmlTags(JSON.parse(res.message.content).improvedExecutionDetails)
+    const original = stripHtmlTags(sample.Product_Price_Execution_Direction__c);
+    const generated = stripHtmlTags(
+      JSON.parse(res.message.content).improvedExecutionDetails
+    );
 
-    const link = `https://ccnag.lightning.force.com/lightning/r/Activation__c/${sample.Id}/view`
-    const line = `${sample.Activity_Name__c},${original.replace(',', ';')},${generated.replace(',', ';')},${link}\n`
+    const link = `https://ccnag.lightning.force.com/lightning/r/Activation__c/${sample.Id}/view`;
+    const line = `${sample.Activity_Name__c},${original.replace(
+      ",",
+      ";"
+    )},${generated.replace(",", ";")},${link}\n`;
     console.log("Generated Execution Details:");
-    console.log(stripHtmlTags(JSON.parse(res.message.content).improvedExecutionDetails));
-    await appendFile('./activity-examples.csv', line, 'utf8');
+    console.log(
+      stripHtmlTags(JSON.parse(res.message.content).improvedExecutionDetails)
+    );
+    await appendFile("./activity-examples.csv", line, "utf8");
   }
-  fs.writeFileSync('./activity-examples.csv', csv)
 };
 
-go();
+const linguistAgent = async () => {
+  let csv = "";
+  let i = 0;
+  let start = false;
+  for (const sample of bicSamples) {
+    i++;
+    if (i > 20) break;
+
+    const prompt = `Please evaluate the following example:
+
+Execution Details:
+"${sample.Product_Price_Execution_Direction__c}"
+
+------
+
+data:
+${JSON.stringify(sample)}
+`;
+
+    const res = await ollama.chat({
+      model: "gemma3:4b",
+      messages: [
+        // { role: "system", content: systemPrompt },
+        { role: "system", content: linguist },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const response = `Example Execution Details:
+"${sample.Product_Price_Execution_Direction__c}"
+
+Generation rules:
+${res.message.content}
+`;
+    console.log(response);
+    await appendFile("./training.md", response, "utf8");
+  }
+};
+
+const copywriterAgent = async () => {
+  let csv = "";
+  let i = 0;
+  let start = false;
+  for (const sample of samples) {
+    i++;
+    if (i > 20) break;
+
+    const prompt = `Please write improved Execution Details using the following information:
+data:
+${JSON.stringify(sample)}
+
+Respond with **ONLY** the Improved Execution Details and no other commentary or reasoning.
+`;
+
+    const prompts = `${copywriter} ${prompt}`
+    console.log('length', prompts.length)
+    const res = await ollama.chat({
+      model: "gemma3:12b",
+      messages: [
+        // { role: "system", content: systemPrompt },
+        { role: "system", content: copywriter },
+        { role: "user", content: prompt },
+      ],
+      format: {
+        type: "object",
+        properties: {
+          improvedExecutionDetails: {
+            type: "string",
+          },
+        },
+        required: ["improvedExecutionDetails"],
+      },
+    });
+
+    const response = `Original Execution Details:
+"${sample.Product_Price_Execution_Direction__c}"
+
+Improved Execution Details:
+${JSON.parse(res.message.content).improvedExecutionDetails}
+`;
+
+    console.log(response);
+    // await appendFile("./training.md", response, "utf8");
+  }
+};
+
+copywriterAgent();

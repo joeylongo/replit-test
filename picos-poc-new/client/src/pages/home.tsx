@@ -24,7 +24,7 @@ export default function Home() {
   },
   {
     title: "Activity Details",
-    fields: ["createdAt", "updatedAt", "status"]
+    fields: ["Promo_Type__c", "Purchase_Quantity__c", "Pricing__c", "Get_Quantity__c", "EDV__c", "Save_Quantity__c", "Channel_Picklist__c", "Promo_Offer__c", "POI_Picklist__c", "Package_Detail__c", "Packaging_Comments__c", "CCNA_Marketing_or_Innovation_Program__c"]
   }
 ];
 

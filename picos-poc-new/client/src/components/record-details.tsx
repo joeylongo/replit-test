@@ -191,21 +191,24 @@ export default function RecordDetails({
 
       <CardContent className="p-6 space-y-10">
         {fieldGroups ? (
-          fieldGroups.map(group => {
-            const groupFields = fieldConfig.filter(f => group.fields.includes(f.key));
+        fieldGroups.map(group => {
+            const groupFields = group.fields
+            .map(key => fieldConfig.find(f => f.key === key))
+            .filter((f): f is FieldConfig => !!f);
+
             return (
-              <div key={group.title}>
+            <div key={group.title}>
                 <h3 className="text-sm font-semibold text-slate-700 mb-4">{group.title}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {groupFields.map(renderField)}
+                {groupFields.map(renderField)}
                 </div>
-              </div>
+            </div>
             );
-          })
+        })
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {fieldConfig.map(renderField)}
-          </div>
+        </div>
         )}
 
         {/* Execution Details */}

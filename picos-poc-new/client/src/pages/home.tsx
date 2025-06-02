@@ -4,6 +4,7 @@ import RecordSelector from "@/components/record-selector";
 import RecordDetails from "@/components/record-details";
 import ExecutionDetails from "@/components/execution-details";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { AlertCircle } from "lucide-react";
 import type { SalesforceRecordData } from "@shared/schema";
 
@@ -15,6 +16,17 @@ export default function Home() {
     data: SalesforceRecordData;
   } | null>(null);
   const [error, setError] = useState<string>("");
+  const [showExecutionModal, setShowExecutionModal] = useState(false);
+  const fieldGroups = [
+  {
+    title: "Activity Types and Dates",
+    fields: ["Activity_Name__c", "Activity_type__c", "Id", "Sell_Enablers__c", "Start_Date__c", "Of_Stores__c", "End_Date__c", "Price_Type__c"]
+  },
+  {
+    title: "Activity Details",
+    fields: ["createdAt", "updatedAt", "status"]
+  }
+];
 
   const handleRecordSelected = (record: {
     id: string;
@@ -59,18 +71,32 @@ export default function Home() {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           <RecordDetails 
             record={selectedRecord}
             className="xl:col-span-2"
             onRecordUpdate={handleRecordUpdate}
+            fieldGroups={fieldGroups}
           />
-          
-          <ExecutionDetails 
-            record={selectedRecord}
-            className="xl:col-span-1"
-            onRecordUpdate={handleRecordUpdate}
-          />
+
+          {selectedRecord && (
+            <Dialog open={showExecutionModal} onOpenChange={setShowExecutionModal}>
+              <DialogTrigger asChild>
+                <button
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  onClick={() => setShowExecutionModal(true)}
+                >
+                  View Execution Details
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <ExecutionDetails
+                  record={selectedRecord}
+                  onRecordUpdate={handleRecordUpdate}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
     </div>

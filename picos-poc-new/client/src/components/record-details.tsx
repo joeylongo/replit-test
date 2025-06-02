@@ -10,6 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import type { SalesforceRecordData, FieldConfig } from "@shared/schema";
 import { DEFAULT_FIELD_CONFIG } from "@shared/schema";
 
+interface FieldGroup {
+  title: string;
+  fields: string[];
+}
+
 interface RecordDetailsProps {
   record: {
     id: string;
@@ -20,9 +25,16 @@ interface RecordDetailsProps {
   className?: string;
   onRecordUpdate?: (updatedData: SalesforceRecordData) => void;
   fieldConfig?: FieldConfig[];
+  fieldGroups?: FieldGroup[];
 }
 
-export default function RecordDetails({ record, className, onRecordUpdate, fieldConfig = DEFAULT_FIELD_CONFIG }: RecordDetailsProps) {
+export default function RecordDetails({
+  record,
+  className,
+  onRecordUpdate,
+  fieldConfig = DEFAULT_FIELD_CONFIG,
+  fieldGroups
+}: RecordDetailsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<SalesforceRecordData | null>(null);
   const { toast } = useToast();
@@ -50,7 +62,8 @@ export default function RecordDetails({ record, className, onRecordUpdate, field
   };
 
   const renderField = (field: FieldConfig) => {
-    if(field.hide) return
+    if (field.hide) return null;
+
     const currentData = isEditing ? editedData : record?.data;
     const value = currentData?.[field.key] || '';
     const isRequired = field.required && !value;
@@ -65,31 +78,29 @@ export default function RecordDetails({ record, className, onRecordUpdate, field
           {field.type === 'textarea' ? (
             <Textarea
               value={value}
-              onChange={(e) => setEditedData(prev => prev ? {...prev, [field.key]: e.target.value} : null)}
+              onChange={(e) =>
+                setEditedData(prev => prev ? { ...prev, [field.key]: e.target.value } : null)
+              }
               placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-              className={cn(
-                "resize-none text-sm",
-                isRequired && "border-red-300 focus:border-red-500"
-              )}
+              className={cn("resize-none text-sm", isRequired && "border-red-300 focus:border-red-500")}
               rows={3}
             />
           ) : (
             <Input
               type={field.type || 'text'}
               value={value}
-              onChange={(e) => setEditedData(prev => prev ? {...prev, [field.key]: e.target.value} : null)}
+              onChange={(e) =>
+                setEditedData(prev => prev ? { ...prev, [field.key]: e.target.value } : null)
+              }
               placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-              className={cn(
-                "text-sm",
-                isRequired && "border-red-300 focus:border-red-500"
-              )}
+              className={cn("text-sm", isRequired && "border-red-300 focus:border-red-500")}
             />
           )}
         </div>
       );
     }
 
-    // Display mode
+    // View mode
     return (
       <div key={field.key} className="space-y-1">
         <label className="block text-xs font-medium text-slate-700 mb-1">
@@ -97,9 +108,7 @@ export default function RecordDetails({ record, className, onRecordUpdate, field
           {field.required && <span className="text-red-500 ml-1">*</span>}
         </label>
         <div className="border border-slate-300 rounded px-3 py-2 bg-white text-sm min-h-[40px] flex items-center">
-          <span className={cn(
-            !value && "text-slate-400 italic"
-          )}>
+          <span className={cn(!value && "text-slate-400 italic")}>
             {value || 'Not set'}
           </span>
         </div>
@@ -108,7 +117,7 @@ export default function RecordDetails({ record, className, onRecordUpdate, field
   };
 
   const currentData = isEditing ? editedData : record?.data;
-  
+
   if (!record) {
     return (
       <Card className={className}>
@@ -151,12 +160,7 @@ export default function RecordDetails({ record, className, onRecordUpdate, field
               {record.type}
             </Badge>
             {!isEditing ? (
-              <Button
-                onClick={startEditing}
-                size="sm"
-                variant="outline"
-                className="h-8"
-              >
+              <Button onClick={startEditing} size="sm" variant="outline" className="h-8">
                 <Edit3 className="w-3 h-3 mr-1.5" />
                 Edit
               </Button>
@@ -184,25 +188,28 @@ export default function RecordDetails({ record, className, onRecordUpdate, field
           </div>
         </div>
       </CardHeader>
-      
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Split fields into 3 columns dynamically */}
-          {Array.from({length: 3}, (_, columnIndex) => {
-            const fieldsPerColumn = Math.ceil(fieldConfig.length / 3);
-            const startIndex = columnIndex * fieldsPerColumn;
-            const columnFields = fieldConfig.slice(startIndex, startIndex + fieldsPerColumn);
-            
+
+      <CardContent className="p-6 space-y-10">
+        {fieldGroups ? (
+          fieldGroups.map(group => {
+            const groupFields = fieldConfig.filter(f => group.fields.includes(f.key));
             return (
-              <div key={columnIndex} className="space-y-4">
-                {columnFields.map(renderField)}
+              <div key={group.title}>
+                <h3 className="text-sm font-semibold text-slate-700 mb-4">{group.title}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {groupFields.map(renderField)}
+                </div>
               </div>
             );
-          })}
-        </div>
+          })
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {fieldConfig.map(renderField)}
+          </div>
+        )}
 
-        {/* Execution Details Section - Separate from dynamic fields */}
-        <div className="mt-8 pt-6 border-t border-slate-100">
+        {/* Execution Details */}
+        <div className="pt-6 border-t border-slate-100">
           <div className="space-y-2">
             <label className="block text-sm font-medium text-slate-700">
               Execution Details
@@ -210,12 +217,17 @@ export default function RecordDetails({ record, className, onRecordUpdate, field
             {isEditing ? (
               <Textarea
                 value={currentData?.Product_Price_Execution_Direction__c || ''}
-                onChange={(e) => setEditedData(prev => prev ? {...prev, Product_Price_Execution_Direction__c: e.target.value} : null)}
+                onChange={(e) =>
+                  setEditedData(prev => prev ? {
+                    ...prev,
+                    Product_Price_Execution_Direction__c: e.target.value
+                  } : null)
+                }
                 className="text-sm min-h-[120px] resize-none"
                 placeholder="Enter execution details..."
               />
             ) : (
-              <div 
+              <div
                 className="border border-slate-300 rounded px-3 py-3 bg-white text-sm min-h-[120px] prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{
                   __html: currentData?.Product_Price_Execution_Direction__c || 'No execution details provided'
@@ -224,7 +236,6 @@ export default function RecordDetails({ record, className, onRecordUpdate, field
             )}
           </div>
         </div>
-
       </CardContent>
     </Card>
   );

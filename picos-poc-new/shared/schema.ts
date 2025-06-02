@@ -61,6 +61,7 @@ export const salesforceRecordDataSchema = z.object({
   Id: z.string().optional(),
   Activity_type__c: z.string().optional(),
   Pricing__c: z.string().optional(),
+  Sell_Enablers__c: z.string().optional(),
   Start_Date__c: z.string().optional(),
   End_Date__c: z.string().optional(),
   Get_Quantity__c: z.string().optional(),
@@ -87,7 +88,7 @@ export type SalesforceRecordData = z.infer<typeof salesforceRecordDataSchema>;
 export interface FieldConfig {
   key: keyof SalesforceRecordData;
   label: string;
-  type?: 'text' | 'email' | 'phone' | 'url' | 'number' | 'textarea';
+  type?: 'text' | 'email' | 'phone' | 'url' | 'number' | 'textarea' | 'date';
   required?: boolean;
   placeholder?: string;
   hide?: boolean;
@@ -99,15 +100,15 @@ export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
   { key: 'Id', label: 'Id', type: 'text' },
   { key: 'Activity_type__c', label: 'Activity Type', type: 'text' },
   { key: 'Pricing__c', label: 'Pricing', type: 'text' },
-  { key: 'Start_Date__c', label: 'Website', type: 'url' },
-  { key: 'Start_Date__c', label: 'Start Date', type: 'phone' },
-  { key: 'End_Date__c', label: 'End Date', type: 'number' },
-  { key: 'Get_Quantity__c', label: 'Annual Revenue', type: 'text' },
-  { key: 'Promo_Offer__c', label: 'Credit Rating', type: 'text' },
+  { key: 'Sell_Enablers__c', label: 'Sell Enablers', type: 'text' },
+  { key: 'Start_Date__c', label: 'Start Date', type: 'date' },
+  { key: 'End_Date__c', label: 'End Date', type: 'date' },
+  { key: 'Get_Quantity__c', label: 'Get Quantity', type: 'text' },
+  { key: 'Promo_Offer__c', label: 'Promo Offer', type: 'text' },
   { key: 'EDV__c', label: 'EDV', type: 'text' },
   { key: 'Channel_Picklist__c', label: 'Channel', type: 'text' },
-  { key: 'POI_Picklist__c', label: 'Save', type: 'text' },
-  { key: 'Save_Quantity__c', label: 'Territory', type: 'text' },
+  { key: 'POI_Picklist__c', label: 'POI', type: 'text' },
+  { key: 'Save_Quantity__c', label: 'Save', type: 'text' },
   { key: 'Price_Type__c', label: 'Price Type', type: 'text' },
   { key: 'Purchase_Quantity__c', label: 'Purchase Quantity', type: 'text' },
   { key: 'Market_Street_Challenge__c', label: 'Market Street Challenge', type: 'text' },

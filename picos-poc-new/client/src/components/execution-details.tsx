@@ -624,7 +624,7 @@ export default function ExecutionDetails({ record, className, onRecordUpdate, on
                       </Badge>
                     </div>
                     
-                    {suggestion.isDiscrepancy && suggestion.currentValue && (
+                    {suggestion.currentValue && (
                       <div className="text-sm text-slate-600 mb-2">
                         <strong>Current:</strong> {suggestion.currentValue}
                       </div>

@@ -773,13 +773,12 @@ export default function ExecutionDetails({ record, className, onRecordUpdate }: 
                   )}
                 </div>
               </div>
-              
               <div className="bg-slate-50 rounded p-3 mb-3">
-                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                  {option.text}
-                </p>
+                <p
+                  className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{ __html: option.text }}
+                />
               </div>
-              
               <div className="mb-3">
                 <h4 className="text-xs font-medium text-slate-600 mb-1">Improvements:</h4>
                 <ul className="text-xs text-slate-600 space-y-1">

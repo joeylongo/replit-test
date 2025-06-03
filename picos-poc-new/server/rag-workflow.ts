@@ -224,7 +224,7 @@ Execution Details: ${recordData.Product_Price_Execution_Direction__c || 'No exec
     const currentValue = recordData[field.key as keyof SalesforceRecordData];
     const hasCurrentValue = currentValue && currentValue.toString().trim() !== '' && currentValue.toString().trim() !== 'undefined' && currentValue.toString().trim() !== 'null';
 // ${this.recordContext}
-    const prompt = `Analyze the following Execution Details to ${hasCurrentValue ? 'detect LITERAL contradictions for' : 'suggest a value for'} the "${field}" field.
+    const prompt = `Analyze the following Execution Details to ${hasCurrentValue ? 'detect LITERAL contradictions for' : 'suggest a value for'} the "${field.key}" field.
 
 Execution Details:
 ${this.executionDetails}

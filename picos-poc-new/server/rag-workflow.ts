@@ -471,6 +471,15 @@ Output: &nbsp;<em>Run tests</em>`
         Do NOT put more than one product description in the Execution Details. If there are multiple products, you should pick the most important one and use that as the product description.
         If the Execution Details already has a product description, you should not add a "Product:" description or explanation to the end of the execution details.
 
+        IMPORTANT: For populated fields, treat the EXECUTION DETAILS as the source of truth. Only flag as a discrepancy if the execution details contain specific information that contradicts the current field value.
+
+        Activity_type__c or "Activity Type" → How to begin Execution Details:
+        - "Execute" or "Headquarter Mandated (HQM)" → Begin with "Execute:"
+        - "Sell" or "Local Sell In (LSI)" → Begin with "Sell:"
+        - "HUNT" or "Hunt" → Begin with "Hunt:"
+        - "VERIFY" or "Verify"  → Begin with "Verify:"
+        - Anything else → Do NOT begin with a verb unless it matches the Activity_type__c exactly.
+
         **Guide to providing layman's terms and jargon to avoid**
         Normalize any product description to the clearest layman’s version. For example:
         - Normalize "SSD Core CAN 12oz x 355ml (12-pack) to "12-pack Core CAN display"

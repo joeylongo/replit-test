@@ -94,7 +94,10 @@ export default function Home() {
                   Analyze Activity
                 </button> */}
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent 
+              // className="max-w-2xl"
+              className="sm:max-w-2xl max-h-screen sm:max-h-[calc(100vh-2rem)] p-0 overflow-scroll"
+              >
                 <ExecutionDetails
                   record={selectedRecord}
                   onRecordUpdate={handleRecordUpdate}

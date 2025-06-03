@@ -122,3 +122,7 @@ export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
 
   // ExecutionDetails is handled separately in the AI component
 ];
+
+export const FIELDS_TO_ANALYZE = [
+  "POI_Picklist__c"
+]

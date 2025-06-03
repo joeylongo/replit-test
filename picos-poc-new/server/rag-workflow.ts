@@ -5,6 +5,7 @@ import ollama from 'ollama'
 const chat = async (messages: any, format: any) => {
   const res = await ollama.chat({
     model: 'gemma3:4b',
+    // model: 'qwen2.5-coder:1.5b-base',
     messages,
     format
   })
@@ -194,12 +195,14 @@ Execution Details: ${recordData.Product_Price_Execution_Direction__c || 'No exec
 
   private async identifyFieldsForAnalysis(recordData: SalesforceRecordData): Promise<{ empty: string[], populated: string[] }> {
     // Import the field configuration
-    const { DEFAULT_FIELD_CONFIG } = await import('../shared/schema');
+    const { DEFAULT_FIELD_CONFIG, FIELDS_TO_ANALYZE } = await import('../shared/schema');
 
     const empty: string[] = [];
     const populated: string[] = [];
 
-        DEFAULT_FIELD_CONFIG.forEach(fieldConfig => {
+    DEFAULT_FIELD_CONFIG.forEach(fieldConfig => {
+      if(!FIELDS_TO_ANALYZE.includes(fieldConfig.key)) return
+
       const value = recordData[fieldConfig.key];
       if (!value || value.toString().trim() === '') {
         empty.push(fieldConfig.key);

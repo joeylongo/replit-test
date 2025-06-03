@@ -4,8 +4,8 @@ import ollama from 'ollama'
 
 const chat = async (messages: any, format: any) => {
   const res = await ollama.chat({
-    model: 'gemma3:4b',
-    // model: 'qwen2.5-coder:1.5b-base',
+    // model: 'gemma3:4b',
+    model: 'qwen2.5-coder:1.5b-base',
     messages,
     format
   })

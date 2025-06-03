@@ -251,7 +251,7 @@ The execution details are always correct - update the record field to match the 
 
 Examples of TRUE discrepancies (field should be updated to match execution details):
 - The POI_Picklist__c (Point of Interest) field shows "Beverage Aisle" but execution details say "Perimeter Display" → Update field to "Beverage Aisle"
-- The Activity_Type__c (Activity Type) field shows "Execute" but execution details say "Sell: ..." → Update field to "Sell"
+- The Activity_type__c (Activity Type) field shows "Execute" but execution details say "Sell: ..." → Update field to "Sell"
 
 NOT discrepancies:
 - Different levels of detail (e.g., "Front of store/Lobby" vs "Front of store")
@@ -366,15 +366,7 @@ Pillar Programs:
       })
       console.log('RESPONSE:', response)
       const parsed = JSON.parse(response || "{}");
-      // const response = await openai.chat.completions.create({
-      //   model: "gpt-4o",
-      //   messages,
-      //   response_format: { type: "json_object" },
-      //   max_tokens: 500
-      // });
 
-      // const parsed = JSON.parse(response.choices[0].message.content || "{}");
-      
       if (parsed.hasSuggestion && parsed.confidence >= 60) {
         return {
           field: field.key,
@@ -382,7 +374,7 @@ Pillar Programs:
           suggestedValue: parsed.suggestedValue,
           confidence: parsed.confidence,
           reasoning: parsed.reasoning,
-          isDiscrepancy: parsed.isDiscrepancy || false
+          isDiscrepancy: parsed.isDiscrepancy || false,
         };
       }
       
@@ -391,6 +383,48 @@ Pillar Programs:
       console.error(`Error analyzing field ${field}:`, error);
       return null;
     }
+  }
+
+  private async stripExecutePrefix(sentence: string): Promise<string> {
+    console.log('stripExecutePrefix sentence', sentence)
+
+    const response = await chat([
+      {
+        role: 'system',
+        content: `You are “HTML-Sanitizer AI.”
+Your single task is to remove a leading 'Execute' directive from an HTML fragment and return the fragment exactly as you received it, minus that directive.
+
+A directive is any case-insensitive variant of Execute (e.g. execute, EXECUTE) immediately followed by an optional space and either a colon (:) or dash (-).
+
+The directive may be wrapped in one or more inline tags such as <b>, <strong>, <i>, <span>, or <p>.
+
+Delete the directive and every tag that exists only to hold the directive.
+
+Do not modify any other character, tag, attribute, or whitespace.
+
+Output only the sanitized HTML, with no extra text, comments, or Markdown fence.
+
+Examples
+Input: <p><b>Execute:</b> Sell 10-pack</p>
+Output: <p>Sell 10-pack</p>
+
+Input: <span>EXECUTE :</span>&nbsp;<em>Run tests</em>
+Output: &nbsp;<em>Run tests</em>`
+      },
+      {role: 'user', message: `Sanitize this HTML: ${sentence}`}
+    ], {
+      type: "object",
+      properties: {
+        sanitized: { type: 'string' },
+      },
+      required: ["sanitized",]
+    });
+    return JSON.parse(response || "{}").sanitized
+    return sentence.replace(
+      //  ^ optional whitespace   execute   optional spaces   : or -   optional spaces
+      /^\s*execute\s*[:\-]\s*/i,
+      '',
+    );
   }
 
   private async rewriteExecutionDetails(recordData: SalesforceRecordData): Promise<ExecutionDetailsRewrite | null> {
@@ -402,7 +436,7 @@ Pillar Programs:
       // const openai = new (await import('openai')).default({
       //   apiKey: process.env.OPENAI_API_KEY
       // });
-      console.log('REWRITEEXECUTIONDETAILS:', recordData)
+
       const prompt = `Please rewrite the provided Execution Details using the best practices for PicOS execution direction.
 
         Here is the Salesforce Activity record:
@@ -412,6 +446,10 @@ Pillar Programs:
 
         Here are the original Execution Details:
         "${recordData.Product_Price_Execution_Direction__c}"
+        
+        Here is the Activity Type:
+        "${recordData.Activity_type__c}"
+
         Tips for improving existing Execution Details:
           - Sometimes the person who originally wrote the Execution Details will include extra information that is not present in any data the Salesforce Record.
             If you identify words and phrases like this, then you should try to include them in the new rewritten Execution Details despite these terms not existing anywher else.
@@ -441,6 +479,7 @@ Pillar Programs:
         - SSD: sparkling soft drink. You dont need to include SSD because people will know which brands are SSDs.
         - 12 x 355ml: You shouldn't simply copy the package types info directly. You must instead say "12 pack of Cans" since cans are always 355ml.
         Here are some specific examples and how to improve them.
+
         1) Bad examples:
             ❌ BAD: Execute 12-pack Core CAN display at the Front of Store/Lobby with SSD Core CAN 12oz x 355ml (12-pack). Implement shelf talkers with a $4.99 promo.
             ❌ BAD: Execute 12-pack Core CAN display featuring SSD Core CAN 12oz x 355ml (12 pack) at $4.99. Deploy shelf talkers to the front of store/lobby. Utilize Simple Promo: 1 can for $4.99.
@@ -448,13 +487,18 @@ Pillar Programs:
             ❌ BAD: Execute 12-pack Core CAN display at the Front of Store/Lobby with $4.99 Simple Promo: 1 can for $4.99. Deploy shelf talkers. Product: SSD Core CAN 12z/355m 12pk.
         2) Good examples:
             ✅ GOOD: Execute 12-pack Core CAN display at the Front of Store/Lobby. Implement shelf talkers with a $4.99 promo.
-            ✅ GOOD: Execute 12-pack Core CAN display at $4.99. Deploy shelf talkers to the front of store/lobby. Utilize Simple Promo: 1 can for $4.99.
+            ✅ GOOD: Sell: Incremental Stand-Alone Smart Water Display. 20oz Smartwater at 2/$4 TPR Activate POS (BBW) Thru 7/8
+            ✅ GOOD: Verify display (running 7/20 - 8/16) TPR/AD - Team Pack Mega $5.99 (display pending - BTS program utilizing school bus display -- 68 cases 12oz 8pk pack out)
             ✅ GOOD: Execute 12-pack Core CAN display at the front of store/lobby. Implement shelf talkers with the $4.99 Simple Promo: 1 can for $4.99.
+            ✅ GOOD: HUNT: Incremental 355mL Coke De Mexico Rack / Display (Must Include Sprite and/or Fanta) at $EDV or $Promo!! (MSC)
             ✅ GOOD: Execute 12-pack Core CAN display at the Front of Store/Lobby with $4.99 Simple Promo: 1 can for $4.99. Deploy shelf talkers.
+       
         **Your job**
         Your job is to focus on what good "Execution Details" look like. Execution Details is another term for the Action Item verbiage or "execution direction" referred to in the guide above.
         The "“PicOS” Look of Success" section of the guide covers good execution details.
         The Execution Details should refer to the Action Item Naming Conventions in the guide where applicable. For example, if the activity is "Market Street Challenge" = Yes, then put "MSC" somwhere to track it.
+
+        ⚠️ CRITICAL RULE: Do **NOT** include the word "Execute" in the Execution Details unless it is explicitly listed as the Activity_type__c vaue.
 
         ⚠️ CRITICAL RULE:
         You must include only ONE product description in the Execution Details. If you mention "12-pack Core CAN display" or similar once, DO NOT repeat it in another format later. This includes variations like:
@@ -476,8 +520,8 @@ Pillar Programs:
 
         Execution details need to be 265 characters or less (not counting HTML tags).
         Execution details may not include links or images, they are just a concise paragraph aimed at providing maximum execution direction in limited space.
-        You if asked to generate Execution details, you should return HTML markup. Please use font weights, different font colors, and underlining to group the information in the best way, and return your response in HTML markup instead of plain text.
-        Please color code the "Activity Type" where "Execute" is red, "Sell" is gray, and "Hunt" is gold.
+        You should return HTML markup. Please use font weights, different font colors, and underlining to group the information in the best way, and return your response in HTML markup instead of plain text.
+       
         ⚠️ CRITICAL RULES:
         - Use <strong>, <u>, and <span style="color:..."> for formatting.
         - Only ONE product description is allowed. Do NOT repeat it in another format.
@@ -488,7 +532,8 @@ Pillar Programs:
         - Use color for verbs: <span style="color:red">Execute</span>, <span style="color:gray">Sell</span>, <span style="color:goldenrod">Hunt</span>.
         - Max 265 characters (excluding HTML tags).
         - Always include promotion context (e.g., MSC, MM, etc.) if available.
-        - You don't always have to start the execution details with the Activity_Type__c (ex: "Execute: 10pk 355ml ...") but if you do, YOU MUST make sure the word matches the Activity_Type__c field value.
+        - You don't always have to start the execution details with the Activity_type__c (ex: "Execute: 10pk 355ml ...") but if you do, YOU MUST make sure the word matches the Activity_type__c field value.
+        - Only begin the Execution Details with "Execute" if and ONLY if the value of Activity_type__c from the Salesforce record is "Execute"
 
         Respond in this JSON format:
         {
@@ -497,6 +542,7 @@ Pillar Programs:
           "confidence": 90
         }
       `;
+      console.log('rewriteExecutionDetails',prompt)
 
     const messages = [
       {
@@ -507,6 +553,7 @@ Pillar Programs:
     - Format using basic HTML (bold, underline, color).
     - Include only the most relevant product and promotion info.
     - Always respond with JSON.
+    - Do **NOT** include the word "Execute" in the Execution Details unless it is explicitly listed as the Activity_type__c vaue.
     - ALWAYS attempt to rewrite the Execution Details. The user can always discard your suggestion if they want.`
       },
       {
@@ -528,7 +575,7 @@ Pillar Programs:
     });
 
       const result = JSON.parse(response || "{}");
-
+    console.log('RESPONSE', response)
       // const response = await openai.chat.completions.create({
       //   model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       //   messages,
@@ -539,10 +586,15 @@ Pillar Programs:
 
       // const result = JSON.parse(response.choices[0].message.content || '{}');
       
+      // Thought maybe we could use AI to remove "Execute" from the begining if the Activity type is NOT execute:
+      // const rewrittenText = recordData.Activity_type__c === 'Execute' ? result.rewrittenText : /execute/i.test(result.rewrittenText) ? await this.stripExecutePrefix(result.rewrittenText) : result.rewrittenText
+
+      const rewrittenText = result.rewrittenText
+      
       if (result.rewrittenText && result.confidence >= 60) {
         return {
           currentText: recordData.Product_Price_Execution_Direction__c,
-          rewrittenText: result.rewrittenText,
+          rewrittenText,
           improvements: result.improvements || [],
           confidence: result.confidence || 75
         };
@@ -551,7 +603,7 @@ Pillar Programs:
       // Fallback if AI doesn't provide rewritten text - should not happen with new prompt
       return {
         currentText: recordData.Product_Price_Execution_Direction__c,
-        rewrittenText: recordData.Product_Price_Execution_Direction__c + " [Enhanced with improved formatting and clarity.]",
+        rewrittenText: recordData.Product_Price_Execution_Direction__c, // + " [Enhanced with improved formatting and clarity.]",
         improvements: ["Enhanced formatting and structure"],
         confidence: 50
       };

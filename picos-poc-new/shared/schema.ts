@@ -140,5 +140,6 @@ export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
 ];
 
 export const FIELDS_TO_ANALYZE = [
-  "POI_Picklist__c"
+  "POI_Picklist__c",
+  "Activity_type__c"
 ]

@@ -1,4 +1,5 @@
 import type { FieldConfig, SalesforceRecordData } from "@shared/schema";
+import { FIELD_PROMPT_CONFIG } from "@shared/schema";
 import ollama from 'ollama'
 
 
@@ -26,6 +27,8 @@ export interface MissingDataSuggestion {
   confidence: number;
   reasoning: string;
   isDiscrepancy: boolean; // true if correcting existing data, false if filling empty field
+  improvementStyle: string;
+  isEmpty?: boolean;
 }
 
 export interface ExecutionDetailsRewrite {
@@ -117,7 +120,9 @@ Execution Details: ${recordData.Product_Price_Execution_Direction__c || 'No exec
     for (const field of fieldsToAnalyze.empty) {
       const suggestion = await this.suggestFieldValue(field, recordData);
       if (suggestion && suggestion.confidence >= 90) {
-        suggestions.push(suggestion);
+        const fieldConfig = FIELD_PROMPT_CONFIG[field.key]
+        const isDiscrepancy = true
+        suggestions.push({...suggestion, isDiscrepancy, improvementStyle: fieldConfig.improvementStyle, isEmpty: true });
       }
     }
 
@@ -125,7 +130,9 @@ Execution Details: ${recordData.Product_Price_Execution_Direction__c || 'No exec
     for (const field of fieldsToAnalyze.populated) {
       const suggestion = await this.suggestFieldValue(field, recordData);
       if (suggestion && suggestion.confidence >= 90) {
-        suggestions.push(suggestion);
+        const fieldConfig = FIELD_PROMPT_CONFIG[field.key]
+        const isDiscrepancy = fieldConfig.improvementStyle === 'literal' ? true : false
+        suggestions.push({...suggestion, isDiscrepancy, improvementStyle: fieldConfig.improvementStyle } );
       }
     }
 
@@ -165,7 +172,7 @@ Execution Details: ${recordData.Product_Price_Execution_Direction__c || 'No exec
 
   async *analyzeExecutionDetails(recordData: SalesforceRecordData): AsyncGenerator<AnalysisStep> {
     yield {
-      step: 6,
+      step: 7,
       type: 'analysis',
       message: 'Analyzing execution details for improvement opportunities...'
     };
@@ -220,35 +227,42 @@ Execution Details: ${recordData.Product_Price_Execution_Direction__c || 'No exec
       return null;
     }
 
-    const fieldHasOptions = field.options?.length
+    const promptConfig = FIELD_PROMPT_CONFIG[field.key]
+    const fieldHasOptions = promptConfig.options?.length
     const currentValue = recordData[field.key as keyof SalesforceRecordData];
     const hasCurrentValue = currentValue && currentValue.toString().trim() !== '' && currentValue.toString().trim() !== 'undefined' && currentValue.toString().trim() !== 'null';
 // ${this.recordContext}
-    const prompt = `Analyze the following Execution Details to ${hasCurrentValue ? 'detect LITERAL contradictions for' : 'suggest a value for'} the "${field.key}" field.
+    const prompt = `Analyze the following Execution Details to ${hasCurrentValue && promptConfig.improvementStyle === 'literal' ? `detect LITERAL contradictions for` : `suggest an improved value for`} the "${field.key}" field.
 
 Execution Details:
 ${this.executionDetails}
 
 ${hasCurrentValue ? `Current field value: "${currentValue}"` : `The "${field.key}" field is currently empty.`}
 
-${fieldHasOptions ? `The ${field.key} enforces the following options: ${field.options?.join(', ')}.\n only suggest one of the available options.` : `The ${field.key} does not enforce a list of options.`}
+${fieldHasOptions 
+  ? `The ${field.key} enforces the following options: ${promptConfig.options?.join(', ')}.
+Only suggest one of the available options. In your reasoning, take into consideration the fact that the value MUST be one of these options.`
+: `The ${field.key} does not enforce a list of options.`}
 
-${hasCurrentValue ? `
+${hasCurrentValue && promptConfig.improvementStyle === 'literal' ? `
 IMPORTANT: For populated fields, treat the EXECUTION DETAILS as the source of truth. Only flag as a discrepancy if the execution details contain specific information that contradicts the current field value.
 
 The execution details are always correct - update the record field to match the execution details when there's a conflict.
 
 Examples of TRUE discrepancies (field should be updated to match execution details):
 - The POI_Picklist__c (Point of Interest) field shows "Beverage Aisle" but execution details say "Perimeter Display" → Update field to "Beverage Aisle"
+- The Activity_Type__c (Activity Type) field shows "Execute" but execution details say "Sell: ..." → Update field to "Sell"
 
 NOT discrepancies:
 - Different levels of detail (e.g., "Front of store/Lobby" vs "Front of store")
+- More or less verbose wording (e.g., Execution details say "10pk Mini Can Perimeter Display" but the POI_Picklist__c field shows "Perimeter" → there is NO discrepancy since Perimeter is one of the enforced options. )
 - Execution details don't mention specific conflicting information
 - Field empty and execution details provide info (that's missing data, not a discrepancy)
 
 Only suggest updating the field value if the execution details explicitly contradict it with specific information. Always suggest the value from execution details as the correct one.
 ` : `
-For empty fields, analyze the execution details to suggest appropriate values if clearly mentioned.
+For this field, instead of being literal in your comparison, analyze the execution details to suggest an improved value.
+If the value is already satisfactory and is not empty, don't provide any suggestion and set "hasSuggest": false.
 `}
 
 Respond with JSON in this exact format:
@@ -260,7 +274,10 @@ Respond with JSON in this exact format:
   "isDiscrepancy": boolean (true ONLY if there's a direct contradiction, false otherwise)
 }
 
-${hasCurrentValue ? 'Be very conservative - if in doubt, do not flag as discrepancy. Only flag TRUE contradictions.' : 'Only suggest if confidence is above 60 and clearly mentioned in execution details.'}`;
+${hasCurrentValue && promptConfig.improvementStyle === 'literal'
+  ? `Be very conservative - if in doubt, do not flag as discrepancy. Only flag TRUE contradictions.`
+  : `Only suggest a suggestedValue if confidence is above 60 and your suggestion is clearly better given info specifically mentioned in execution details.`}
+`;
 
 console.log('PROMPT:', prompt)
     try {
@@ -297,7 +314,7 @@ Segment HQM action items when activity is store specific
 Action Item verbiage (Execution Details) must clearly detail the intended execution, including Brand, Package, Point of Sale, Price and ideal Location
 For example, “Sell in 4x3 Merchandising Rack and/or display in the perimeter with 2L Fanta flavors at 4/$5. Activate with Fanta Halloween graphics from the POS Store."
 Detail MSC specific brands/packages when applicable
-For example, “Execute a 12 Pack end with including Coke, Diet Coke, Coke Zero Sugar, Sprite and Fanta Orange at 3/$12. Wing 6 Pack ½ Liter at 2/$6. Activate Big Game POS from the POS Store.
+For example, “Execute a 12 Pack end with including Coke, Diet Coke, Coke Zero Sugar, Sprite and Fanta Orange at 3/$12. Wing 6 Pack ½ Liter at 2/$6. Activate Big Game POS from the POS Store.”
 Include baseline MSC Score in Verify
 Include appropriate naming conventions (see details)
 Every action item should include a picture of the desired execution
@@ -385,7 +402,7 @@ Pillar Programs:
       // const openai = new (await import('openai')).default({
       //   apiKey: process.env.OPENAI_API_KEY
       // });
-
+      console.log('REWRITEEXECUTIONDETAILS:', recordData)
       const prompt = `Please rewrite the provided Execution Details using the best practices for PicOS execution direction.
 
         Here is the Salesforce Activity record:
@@ -471,6 +488,7 @@ Pillar Programs:
         - Use color for verbs: <span style="color:red">Execute</span>, <span style="color:gray">Sell</span>, <span style="color:goldenrod">Hunt</span>.
         - Max 265 characters (excluding HTML tags).
         - Always include promotion context (e.g., MSC, MM, etc.) if available.
+        - You don't always have to start the execution details with the Activity_Type__c (ex: "Execute: 10pk 355ml ...") but if you do, YOU MUST make sure the word matches the Activity_Type__c field value.
 
         Respond in this JSON format:
         {
@@ -488,7 +506,8 @@ Pillar Programs:
     - Never duplicate product descriptions.
     - Format using basic HTML (bold, underline, color).
     - Include only the most relevant product and promotion info.
-    - Always respond with JSON.`
+    - Always respond with JSON.
+    - ALWAYS attempt to rewrite the Execution Details. The user can always discard your suggestion if they want.`
       },
       {
         role: "user",

@@ -9,7 +9,7 @@ import { Workflow } from "@llamaindex/workflow";
 import axios from "axios";
 import ollama from "ollama";
 import samples from "../samples/test-samples.json";
-import bicSamples from "../samples/P-000746_KROGER/100-picos-samples.json";
+import bicSamples from "../samples/P-000746_KROGER/krogersamples2.json";
 import { systemPrompt } from "../workflow/contexts/systemContext";
 import fs from "fs";
 import { appendFile } from "node:fs/promises";
@@ -309,7 +309,7 @@ Generation rules:
 ${res.message.content}
 `;
     console.log(response);
-    await appendFile("./training.md", response, "utf8");
+    // await appendFile("./training.md", response, "utf8");
   }
 };
 
@@ -328,8 +328,8 @@ ${JSON.stringify(sample)}
 Respond with **ONLY** the Improved Execution Details and no other commentary or reasoning.
 `;
 
-    const prompts = `${copywriter} ${prompt}`
-    console.log('length', prompts.length)
+    const prompts = `${copywriter} ${prompt}`;
+    console.log("length", prompts.length);
     const res = await ollama.chat({
       model: "gemma3:12b",
       messages: [
@@ -360,4 +360,85 @@ ${JSON.parse(res.message.content).improvedExecutionDetails}
   }
 };
 
-copywriterAgent();
+const activityNameAgent = async () => {
+  for (const sample of bicSamples) {
+    const activityName = sample.Activity_Name__c
+    sample.Activity_Name__c = ''
+
+    const systemprompt = `You are an information-mapping agent.
+
+**Goal**
+Given:
+1. A single Salesforce record in JSON form.
+2. A short natural-language sentence (the Activity Name) that was written by referencing that record.
+
+Identify exactly which *fields* (a.k.a. keys / attributes) from the record are explicitly or implicitly reflected in the sentence.
+Also provide directions for future agents to follow to help them take salesforce record details and build a new Activity Name based on this exmaple.
+
+**What counts as “reflected”?**  
+▪ The sentence states the field’s value verbatim (e.g. “Acme Corp”).  
+▪ The sentence paraphrases the value (“won on March 1” → matches CloseDate \`2025-03-01\`).  
+▪ The sentence implies a field through synonyms or category terms (“enterprise account” → matches \`Segment: "Enterprise"\`).  
+If a field is not mentioned or cannot be confidently mapped, it is *not* “included”.
+
+**Only include fieldsUsed that you are certain contributed to the Activity Name**
+If you are at all uncertain, exclued the field
+
+**Output format (JSON, no extra keys, no comments, NO surrounding Markdown)**
+\`\`\`json
+{
+  "fieldsUsed": ["<FieldName1>", "<FieldName2>", "..."],
+  "extractions": {
+    "<FieldName1>": "<snippet or reason>",
+    "<FieldName2>": "<snippet or reason>"
+  },
+  "directions": "<Ex: The activity type, promotion and location combined into a short sentance>"
+}`;
+
+    const prompt = `Please identify which fields were used to write the Activity Name:
+
+Activity Name: ${sample.Activity_Name__c}
+
+Salesforce Record:
+${JSON.stringify(sample)}
+`;
+    const res = await ollama.chat({
+      model: "gemma3:4b",
+      messages: [
+        { role: "system", content: systemprompt },
+        { role: "user", content: prompt },
+      ],
+      format: {
+        $schema: "http://json-schema.org/draft-07/schema#",
+        title: "Sentence-to-Record Mapping",
+        type: "object",
+        additionalProperties: false,
+
+        properties: {
+          fieldsUsed: {
+            type: "array",
+            items: { type: "string" },
+          },
+          extractions: {
+            type: "object",
+            description:
+              "Keys mirror the field names listed in fieldsUsed; values give the matching snippet or rationale.",
+            additionalProperties: { type: "string" },
+          },
+          directions: {
+            type: "string",
+          }
+        },
+
+        required: ["fieldsUsed", "extractions"],
+      },
+    });
+
+    console.log(res.message.content);
+    await appendFile("./activity-name.jsonl", JSON.stringify({...JSON.parse(res.message.content), activityName}) + '\n', "utf8");
+  }
+};
+
+// copywriterAgent();
+
+activityNameAgent();

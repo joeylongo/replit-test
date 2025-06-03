@@ -101,6 +101,7 @@ export default function Home() {
                 <ExecutionDetails
                   record={selectedRecord}
                   onRecordUpdate={handleRecordUpdate}
+                  onComplete={() => setShowExecutionModal(false)}
                 />
               </DialogContent>
             </Dialog>

@@ -18,7 +18,7 @@ export default function Header() {
       {/* ───────────────────────────── 1 st row ───────────────────────────── */}
       <div className="flex items-center justify-between h-14 px-4 lg:px-8">
         {/* left – title */}
-        <h1 className="text-xl font-semibold text-slate-900">Activity Tool</h1>
+        <h1 className="text-xl font-semibold text-slate-900">Coke PicOS TOOL</h1>
 
         {/* middle – search box */}
         <div className="flex-1 flex justify-center">
@@ -61,8 +61,8 @@ export default function Header() {
 
         {/* “Reports ▾” */}
         <button className="flex items-center text-lg font-medium text-slate-900">
-          Reports
-          <ChevronDown className="w-4 h-4 ml-1" />
+          Coke PicOS
+          {/* <ChevronDown className="w-4 h-4 ml-1" /> */}
         </button>
 
         {/* “Activities ▾” – active / highlighted */}

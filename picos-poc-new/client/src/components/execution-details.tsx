@@ -18,6 +18,7 @@ interface ExecutionDetailsProps {
   } | null;
   className?: string;
   onRecordUpdate?: (updatedData: SalesforceRecordData) => void;
+  onComplete: Function;
 }
 
 interface AnalysisStep {
@@ -34,6 +35,8 @@ interface MissingDataSuggestion {
   confidence: number;
   reasoning: string;
   isDiscrepancy: boolean; // true if correcting existing data, false if filling empty field
+  improvementStyle: string;
+  isEmpty?: boolean;
 }
 
 interface ExecutionDetailsRewrite {
@@ -51,7 +54,7 @@ interface ExecutionDetailsOption {
   isRejected: boolean;
 }
 
-export default function ExecutionDetails({ record, className, onRecordUpdate }: ExecutionDetailsProps) {
+export default function ExecutionDetails({ record, className, onRecordUpdate, onComplete }: ExecutionDetailsProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
   const [suggestions, setSuggestions] = useState<MissingDataSuggestion[]>([]);
@@ -323,6 +326,7 @@ export default function ExecutionDetails({ record, className, onRecordUpdate }: 
         title: "Execution Details Updated",
         description: "The selected execution details have been applied",
       });
+      onComplete()
     }
   };
 
@@ -593,8 +597,9 @@ export default function ExecutionDetails({ record, className, onRecordUpdate }: 
                 {suggestions.map((suggestion, index) => (
                   <div key={index} className={cn(
                     "border rounded-lg p-4",
-                    suggestion.isDiscrepancy 
-                      ? "border-red-200 bg-red-50" 
+                      suggestion.isEmpty ?  "border-orange-200 bg-orange-50" 
+                      : suggestion.isDiscrepancy ? "border-red-200 bg-red-50" 
+                      : suggestion.improvementStyle === 'enhance' ? "border-green-200 bg-green-50"
                       : "border-orange-200 bg-orange-50"
                   )}>
                     <div className="flex items-center justify-between mb-2">
@@ -604,11 +609,14 @@ export default function ExecutionDetails({ record, className, onRecordUpdate }: 
                         </div>
                         <Badge variant="outline" className={cn(
                           "text-xs",
-                          suggestion.isDiscrepancy 
-                            ? "bg-red-100 text-red-700 border-red-200" 
+                            suggestion.isEmpty ?  "bg-orange-100 text-orange-700 border-orange-200"
+                            : suggestion.isDiscrepancy ? "bg-red-100 text-red-700 border-red-200" 
+                            : suggestion.improvementStyle  === 'enhance' ?  "bg-green-100 text-green-700 border-green-200"
                             : "bg-orange-100 text-orange-700 border-orange-200"
                         )}>
-                          {suggestion.isDiscrepancy ? 'Data Discrepancy' : 'Missing Data'}
+                          {suggestion.isEmpty ? 'Missing Data'
+                            : suggestion.isDiscrepancy ? 'Data Discrepancy'
+                            : 'Enhancement'}
                         </Badge>
                       </div>
                       <Badge variant="outline" className="bg-slate-100 text-slate-700">

@@ -92,14 +92,56 @@ export interface FieldConfig {
   required?: boolean;
   placeholder?: string;
   hide?: boolean;
-  options?: string[];
+}
+
+export const FIELD_PROMPT_CONFIG: any = {
+  POI_Picklist__c: {
+    options: [
+      'Bakery',
+      'Beverage Aisle',
+      'Checkout',
+      'Deli - Prepared & Quick Prep Meals',
+      'End Cap',
+      'Front of Store/Lobby',
+      'Frozen',
+      'Meat/Seafood',
+      'Perimeter',
+      'Pharmacy',
+      'Pharmacy',
+      'Produce',
+      'Seasonal',
+      'Wine Adjacency',
+    ],
+    improvementStyle: 'literal'
+  },
+  Activity_type__c: {
+    options: [
+      'Execute',
+      'Sell',
+      'Hunt',
+      'Verify',
+    ],
+    improvementStyle: 'enhance'
+  },
+  Promo_Type__c: {
+    options: [
+      'Buy Get',
+      'Buy Save',
+      'Each',
+      'Must Buy',
+      'Other',
+      'V Simple',
+      'N/A',
+    ],
+    improvementStyle: 'literal'
+  }
 }
 
 // Default field configuration - customize this for your use case
 export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
   { key: 'Activity_Name__c', label: 'Activity Name', type: 'text', required: true },
   { key: 'Id', label: 'Id', type: 'text' },
-  { key: 'Activity_type__c', label: 'Activity Type', type: 'text' },
+  { key: 'Activity_type__c', label: 'Activity Type', type: 'text',  },
   { key: 'Pricing__c', label: 'Pricing', type: 'text' },
   { key: 'Sell_Enablers__c', label: 'Sell Enablers', type: 'text' },
   { key: 'Start_Date__c', label: 'Start Date', type: 'date' },
@@ -108,28 +150,14 @@ export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
   { key: 'Promo_Offer__c', label: 'Promo Offer', type: 'text' },
   { key: 'EDV__c', label: 'EDV', type: 'text' },
   { key: 'Channel_Picklist__c', label: 'Channel', type: 'text' },
-  { key: 'POI_Picklist__c', label: 'POI', type: 'text', options: [
-    'Bakery',
-    'Beverage Aisle',
-    'Checkout',
-    'Deli - Prepared & Quick Prep Meals',
-    'End Cap',
-    'Front of Store/Lobby',
-    'Frozen',
-    'Meat/Seafood',
-    'Perimeter',
-    'Pharmacy',
-    'Pharmacy',
-    'Produce',
-    'Seasonal',
-    'Wine Adjacency',
-  ] },
+  { key: 'POI_Picklist__c', label: 'POI', type: 'text'  },
   { key: 'Save_Quantity__c', label: 'Save', type: 'text' },
   { key: 'Price_Type__c', label: 'Price Type', type: 'text' },
   { key: 'Purchase_Quantity__c', label: 'Purchase Quantity', type: 'text' },
   { key: 'Market_Street_Challenge__c', label: 'Market Street Challenge', type: 'text' },
   { key: 'Late_break__c', label: 'Late-break', type: 'text' },
-  { key: 'Promo_Type__c', label: 'Promo Type', type: 'text' },
+  { key: 'Promo_Type__c', label: 'Promo Type', type: 'text', 
+},
   { key: 'Of_Stores__c', label: '% Of Stores', type: 'text' },
   { key: 'Package_Detail__c', label: 'Package Detail', type: 'text' },
   { key: 'Packaging_Comments__c', label: 'Promotion Summary', type: 'text' },
@@ -143,7 +171,7 @@ export const FIELDS_TO_ANALYZE = [
   "POI_Picklist__c",
   "Activity_type__c",
   "Promo_Type__c",
-  "Pricing__c",
-  "Package_Detail__c",
-  "Activity_Name__c"
+  // "Pricing__c",
+  // "Package_Detail__c",
+  // "Activity_Name__c"
 ]

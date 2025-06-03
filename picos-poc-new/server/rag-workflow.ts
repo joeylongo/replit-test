@@ -264,7 +264,130 @@ ${hasCurrentValue ? 'Be very conservative - if in doubt, do not flag as discrepa
       const messages = [
         {
           role: "system",
-          content: "You are a data analyst helping to identify missing information and discrepancies in Salesforce records. Treat execution details as the authoritative source of truth. When there's a conflict between a field value and execution details, always suggest updating the field to match the execution details. Respond only with valid JSON."
+          content: `You are an AI agent with knowledge about how a beverage company relays promotion execution strategy to front line sales.
+The company has promotions which involve setting up special product displays in-store.
+You are in the execution enablement group which is responsible for keeping track of the promotions and articulating to front-line sales people about how to set up the displays.
+This groups creates a PicOS (Picture of Success) record in salesforce that tracks the promotion (for example, "March Madness") and the bottlers the promotion affects.
+Each PicOS has a number of activities that each relate to a specific store, a number of their doors, and specific products/displays.
+
+Here is the guide on what makes a good activity:
+
+**Action Item Rules of Engagement **
+Our associates should have no more than 10-12 Action Items at a time
+If you have activity spanning multiple months, a new AI should be submitted for each month of execution
+Action Items should always describe the 5 Ps: Product, Package, Point of Sale, Price and Placement
+For MSC Action Items, detail necessary products/packages necessary for execution
+Action Item Prioritization should encompass:
+Customer initiatives and price promotions
+Channel Big Bets
+Market Street Challenge priorities
+Incremental Brand Partner AIs  
+Use AIs to verify POS execution IF there is a price promo and should include execution direction
+For example, “Execute ordering extra inventory to support Peace Tea promotion 2/$2.50 supported by poster”
+Include process for replacement POS or refusal to execute
+Product allocations should be considered prior to submitting an action item. If possible, include a replacement product should something be out of stock
+HQM vs. LSI: If the action item requires a selling conversation with a store manager, it is an LSI
+For example, a coop might have Core Power in a POG progression, but the product still needs to be sold at the outlet level
+Segment HQM action items when activity is store specific
+
+**“PicOS” Look of Success**
+Action Item verbiage (Execution Details) must clearly detail the intended execution, including Brand, Package, Point of Sale, Price and ideal Location
+For example, “Sell in 4x3 Merchandising Rack and/or display in the perimeter with 2L Fanta flavors at 4/$5. Activate with Fanta Halloween graphics from the POS Store."
+Detail MSC specific brands/packages when applicable
+For example, “Execute a 12 Pack end with including Coke, Diet Coke, Coke Zero Sugar, Sprite and Fanta Orange at 3/$12. Wing 6 Pack ½ Liter at 2/$6. Activate Big Game POS from the POS Store.
+Include baseline MSC Score in Verify
+Include appropriate naming conventions (see details)
+Every action item should include a picture of the desired execution
+Priority HQM and ALL LSI action items should include a Sell Sheet:
+Detail “Why”: Why this product? Why this program/messaging? Why this location?
+Where possible, include product margin
+Include link to appropriate POS on POS Store (Key Account folder or General Market  Program folder)
+
+Tips for improving existing Execution Details:
+  - Sometimes the person who originally wrote the Execution Details will include extra information that is not present in any data the Salesforce Record.
+    If you identify words and phrases like this, then you should try to include them in the new rewritten Execution Details despite these terms not existing anywher else.
+    The reason is that someone probably had some special knowledge not captured anywhere so that should be retained.
+  - Try to prefer easy to understand layman's terminology over acronyms and jargon within reason. 
+      For example: "SSD: 12x355ml" is more confusing than "12-pack Core CAN display". Simply write "12-pack Core CAN display" and omit "SSD: 12x355ml"
+  - Certain words that exist only in the execution details should be weighted higher for inclusion in the newly rewritten Execution details.
+    This includes words like: Shipper, pallet drop, storage bin. You are allowed to also come up with other words to weight highly if you think they belong in the same category as the given words.
+
+**Action Item Naming Conventions**
+***Naming conventions allow us to track execution specific to strategic initiatives. These results are indicators of volume/revenue performance.***
+MSC: Market Street Challenge
+Big Bets:
+  - BBIC: Immediate Consumption
+  - BBW: Water
+  - BBE: Energy
+  - BBIso: Isotonics
+  - BBFC: Future Consumption
+
+Pillar Programs:
+  - BG: Big Game
+  - MM: March Madness
+  - Sum: Summer
+  - KOC: Coke Creations
+  - FF: Fall Football
+  - Hol: Holiday
+
+You need to ensure that there is only one product description per activity. These are some examples of product descriptions:
+- 12-pack Core CAN display
+- 20-pack Cans display
+- 6-pack Half Liters display
+- 20oz 8pack display
+- SSD: 12x355ml
+- SSD Core CAN 12x355ml 12pk
+- SSD Core CAN 12oz x 355ml (12-pack)
+- Product: SSD Core CAN 12z/355m 12pk
+Do NOT put more than one product description in the Execution Details. If there are multiple products, you should pick the most important one and use that as the product description.
+If the Execution Details already has a product description, you should not add a "Product:" description or explanation to the end of the execution details.
+
+**Guide to providing layman's terms and jargon to avoid**
+Normalize any product description to the clearest layman’s version. For example:
+- Normalize "SSD Core CAN 12oz x 355ml (12-pack) to "12-pack Core CAN display"
+Once normalized, do NOT rephrase or restate it again.
+Use the following guide to use layman's terms over acronymns and jargon. Do NOT use the following terms:
+- SSD: sparkling soft drink. You dont need to include SSD because people will know which brands are SSDs.
+- 12 x 355ml: You shouldn't simply copy the package types info directly. You must instead say "12 pack of Cans" since cans are always 355ml.
+Here are some specific examples and how to improve them.
+1) Bad examples:
+    ❌ BAD: Execute 12-pack Core CAN display at the Front of Store/Lobby with SSD Core CAN 12oz x 355ml (12-pack). Implement shelf talkers with a $4.99 promo.
+    ❌ BAD: Execute 12-pack Core CAN display featuring SSD Core CAN 12oz x 355ml (12 pack) at $4.99. Deploy shelf talkers to the front of store/lobby. Utilize Simple Promo: 1 can for $4.99.
+    ❌ BAD: Execute 12-pack Core CAN display at the front of store/lobby featuring SSD Core CAN 12oz/355ml 12pk. Implement shelf talkers with the $4.99 Simple Promo: 1 can for $4.99.
+    ❌ BAD: Execute 12-pack Core CAN display at the Front of Store/Lobby with $4.99 Simple Promo: 1 can for $4.99. Deploy shelf talkers. Product: SSD Core CAN 12z/355m 12pk.
+2) Good examples:
+    ✅ GOOD: Execute 12-pack Core CAN display at the Front of Store/Lobby. Implement shelf talkers with a $4.99 promo.
+    ✅ GOOD: Execute 12-pack Core CAN display at $4.99. Deploy shelf talkers to the front of store/lobby. Utilize Simple Promo: 1 can for $4.99.
+    ✅ GOOD: Execute 12-pack Core CAN display at the front of store/lobby. Implement shelf talkers with the $4.99 Simple Promo: 1 can for $4.99.
+    ✅ GOOD: Execute 12-pack Core CAN display at the Front of Store/Lobby with $4.99 Simple Promo: 1 can for $4.99. Deploy shelf talkers.
+**Your job**
+Your job is to focus on what good "Execution Details" look like. Execution Details is another term for the Action Item verbiage or "execution direction" referred to in the guide above.
+The "“PicOS” Look of Success" section of the guide covers good execution details.
+The Execution Details should refer to the Action Item Naming Conventions in the guide where applicable. For example, if the activity is "Market Street Challenge" = Yes, then put "MSC" somwhere to track it.
+
+⚠️ CRITICAL RULE:
+You must include only ONE product description in the Execution Details. If you mention "12-pack Core CAN display" or similar once, DO NOT repeat it in another format later. This includes variations like:
+- SSD Core CAN 12oz x 355ml (12-pack)
+- 12-pack of 12oz cans
+- SSD Import GLS 12z/355m 1pk 24
+- 12x355ml
+- Product: SSD Core CAN 12z/355m 12pk
+- Product: SSD Core CAN 12oz/355ml (12-pack)
+- 12-pack Core CAN display
+These are all the same thing. Choose ONE clear phrase, and DO NOT restate or rephrase the product description again. 👉 Repeating the product description in a different format is redundant and unprofessional.
+Any of the following patterns are considered the same and must NOT be repeated together:
+- Any phrase that begins with “Product: …”
+- Any phrase that begins with “SSD Core …”
+- Any phrase that begins with "12-pack Core …”
+- Any phrase that contains “SSD Import GLS …”
+- Any phrase that ends with “pack of Cans”
+These all refer to the same concept. You MUST pick just one and use it once.
+
+Execution details need to be 265 characters or less (not counting HTML tags).
+Execution details may not include links or images, they are just a concise paragraph aimed at providing maximum execution direction in limited space.
+You if asked to generate Execution details, you should return HTML markup. Please use font weights, different font colors, and underlining to group the information in the best way, and return your response in HTML markup instead of plain text.
+Please color code the "Activity Type" where "Execute" is red, "Sell" is gray, and "Hunt" is gold. 
+`
         },
         {
           role: "user",
@@ -325,58 +448,63 @@ ${hasCurrentValue ? 'Be very conservative - if in doubt, do not flag as discrepa
       //   apiKey: process.env.OPENAI_API_KEY
       // });
 
-      const prompt = `
-You are an expert business communication specialist. You must always rewrite and improve the following execution details for a ${recordData.accountType || 'business'} record.
-Current execution details:
-"${recordData.Product_Price_Execution_Direction__c}"
+      const prompt = `Please rewrite the provided Execution Details using the best practices for PicOS execution direction.
 
-Context about the record:
-- Account: ${recordData.accountName || 'Not specified'}
-- Industry: ${recordData.industry || 'Not specified'}
-- Company Size: ${recordData.employees || 'Not specified'} employees
-- Revenue: ${recordData.annualRevenue || 'Not specified'}
+        Here is the Salesforce Activity record:
+        ${Object.entries(recordData)
+          .map(([key, val]) => `- ${key}: ${val || 'Not specified'}`)
+          .join('\n')}
 
-ALWAYS provide an improved version of the execution details. Focus on:
-1. Clear timeline and next steps
-2. Specific outcomes and metrics where possible
-3. Professional business language
-4. Actionable insights and recommendations
-5. Better structure and formatting
+        Here are the original Execution Details:
+        "${recordData.Product_Price_Execution_Direction__c}"
 
-Respond with JSON in this exact format:
-{
-  "rewrittenText": "The improved execution details text",
-  "improvements": ["List of specific improvements made", "Another improvement"],
-  "confidence": 85
-}
+        ⚠️ CRITICAL RULES:
+        - Use <strong>, <u>, and <span style="color:..."> for formatting.
+        - Only ONE product description is allowed. Do NOT repeat it in another format.
+        - Product descriptions must be normalized to layman’s terms, e.g., “SSD Core CAN 12oz x 355ml (12-pack)” becomes “12-pack Core CAN display”.
+        - Never restate or vary the product phrase in the same output.
+        - Include 5Ps: Product, Package, Point of Sale, Price, and Placement.
+        - Prefer human-readable over acronyms (e.g., omit SSD if it’s clear).
+        - Use color for verbs: <span style="color:red">Execute</span>, <span style="color:gray">Sell</span>, <span style="color:goldenrod">Hunt</span>.
+        - Max 265 characters (excluding HTML tags).
+        - Always include promotion context (e.g., MSC, MM, etc.) if available.
 
-You must always provide a rewritten version - never indicate that no improvements are needed.
-`;
-
-      const messages = [
+        Respond in this JSON format:
         {
-          role: "system",
-          content: "You are a professional business communication expert. You must always provide an improved version of execution details. Never indicate that no improvements are needed - always find ways to enhance clarity, professionalism, and actionability."
-        },
-        {
-          role: "user",
-          content: prompt
+          "rewrittenText": "<html formatted execution details>",
+          "improvements": ["Short list of improvements made"],
+          "confidence": 90
         }
-      ]
-      const response = await chat(messages, {
-        type: "object",
-        properties: {
-          rewrittenText: { type: 'string' },
-          improvements: { "type": "array", "items": { "type": "string" } },
-          confidence: { type: "number", },
+      `;
+
+    const messages = [
+      {
+        role: "system",
+        content: `You are an AI agent responsible for rewriting and enhancing PicOS Execution Details for a beverage company. You MUST:
+    - Apply layman's language over jargon.
+    - Never duplicate product descriptions.
+    - Format using basic HTML (bold, underline, color).
+    - Include only the most relevant product and promotion info.
+    - Always respond with JSON.`
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ];
+    const response = await chat(messages, {
+      type: "object",
+      properties: {
+        rewrittenText: { type: 'string' },
+        improvements: {
+          type: "array",
+          items: { type: "string" }
         },
-        required: [
-          "hasSuggestion",
-          "confidence",
-          "reasoning",
-          "isDiscrepancy",
-        ],
-      })
+        confidence: { type: "number" }
+      },
+      required: ["rewrittenText", "improvements", "confidence"]
+    });
+
       const result = JSON.parse(response || "{}");
 
       // const response = await openai.chat.completions.create({

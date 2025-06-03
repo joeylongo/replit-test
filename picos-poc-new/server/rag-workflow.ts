@@ -5,7 +5,7 @@ import ollama from 'ollama'
 
 const chat = async (messages: any, format: any) => {
   const res = await ollama.chat({
-    model: 'gemma3:4b',
+    model: 'gemma3:12b',
     // model: 'qwen2.5-coder:1.5b-base',
     messages,
     format
@@ -532,8 +532,6 @@ Output: &nbsp;<em>Run tests</em>`
         - Use color for verbs: <span style="color:red">Execute</span>, <span style="color:gray">Sell</span>, <span style="color:goldenrod">Hunt</span>.
         - Max 265 characters (excluding HTML tags).
         - Always include promotion context (e.g., MSC, MM, etc.) if available.
-        - You don't always have to start the execution details with the Activity_type__c (ex: "Execute: 10pk 355ml ...") but if you do, YOU MUST make sure the word matches the Activity_type__c field value.
-        - Only begin the Execution Details with "Execute" if and ONLY if the value of Activity_type__c from the Salesforce record is "Execute"
 
         Respond in this JSON format:
         {
@@ -553,7 +551,6 @@ Output: &nbsp;<em>Run tests</em>`
     - Format using basic HTML (bold, underline, color).
     - Include only the most relevant product and promotion info.
     - Always respond with JSON.
-    - Do **NOT** include the word "Execute" in the Execution Details unless it is explicitly listed as the Activity_type__c vaue.
     - ALWAYS attempt to rewrite the Execution Details. The user can always discard your suggestion if they want.`
       },
       {

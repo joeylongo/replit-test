@@ -1,37 +1,115 @@
-import { Settings, Circle } from "lucide-react";
+"use client";
+
+import {
+  Grid,
+  ChevronDown,
+  Star,
+  Plus,
+  Rocket,
+  HelpCircle,
+  Bell,
+  CircleUser,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 export default function Header() {
   return (
-    <header className="bg-white shadow-sm border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <svg 
-                className="w-4 h-4 text-white" 
-                viewBox="0 0 24 24" 
-                fill="currentColor"
-              >
-                <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM12 17.5L6.5 12h3V8.5h5V12h3L12 17.5z"/>
-              </svg>
-            </div>
-            <h1 className="text-xl font-semibold text-slate-800">
-              Salesforce AI Assistant
-            </h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-              <Circle className="w-2 h-2 mr-1.5 fill-current" />
-              Connected
-            </Badge>
-            <Button variant="ghost" size="sm">
-              <Settings className="w-4 h-4 text-slate-400" />
-            </Button>
+    <header className="bg-white border-b-4 border-red-600">
+      {/* ───────────────────────────── 1 st row ───────────────────────────── */}
+      <div className="flex items-center justify-between h-14 px-4 lg:px-8">
+        {/* left – title */}
+        <h1 className="text-xl font-semibold text-slate-900">Activity Tool</h1>
+
+        {/* middle – search box */}
+        <div className="flex-1 flex justify-center">
+          <input
+            type="search"
+            placeholder="Search…"
+            className="w-full max-w-md rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300"
+          />
+        </div>
+
+        {/* right – icon buttons */}
+        <div className="flex items-center space-x-3">
+          <IconOutline>
+            <Star className="w-4 h-4" />
+          </IconOutline>
+          <IconSolid>
+            <Plus className="w-4 h-4" />
+          </IconSolid>
+          <IconGhost>
+            <Rocket className="w-4 h-4" />
+          </IconGhost>
+          <IconGhost>
+            <HelpCircle className="w-4 h-4" />
+          </IconGhost>
+          <IconGhost>
+            <Bell className="w-4 h-4" />
+          </IconGhost>
+          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+            <CircleUser className="w-5 h-5 text-slate-600" />
           </div>
         </div>
       </div>
+
+      {/* ───────────────────────────── 2 nd row ───────────────────────────── */}
+      <div className="flex items-center h-10 px-4 lg:px-8 space-x-6 border-t border-slate-200">
+        {/* 9-dot grid */}
+        <Button variant="ghost" size="icon" className="p-0 hover:bg-transparent">
+          <Grid className="w-5 h-5 text-slate-500" />
+        </Button>
+
+        {/* “Reports ▾” */}
+        <button className="flex items-center text-lg font-medium text-slate-900">
+          Reports
+          <ChevronDown className="w-4 h-4 ml-1" />
+        </button>
+
+        {/* “Activities ▾” – active / highlighted */}
+        <button className="relative flex items-center text-sm font-medium text-slate-900 bg-red-50 px-4 h-full">
+          <span className="absolute -top-px left-0 w-full h-0.5 bg-red-600" />
+          Activities
+          <ChevronDown className="w-4 h-4 ml-1" />
+        </button>
+      </div>
     </header>
+  );
+}
+
+/* —————————————————— small icon-button helpers —————————————————— */
+
+function IconGhost({ children }: { children: React.ReactNode }) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="w-8 h-8 text-slate-500 hover:bg-slate-100"
+    >
+      {children}
+    </Button>
+  );
+}
+
+function IconSolid({ children }: { children: React.ReactNode }) {
+  return (
+    <Button
+      variant="secondary"
+      size="icon"
+      className="w-8 h-8 bg-slate-200 text-slate-700 hover:bg-slate-300"
+    >
+      {children}
+    </Button>
+  );
+}
+
+function IconOutline({ children }: { children: React.ReactNode }) {
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      className="w-8 h-8 border-slate-400 text-slate-700 hover:bg-slate-100"
+    >
+      {children}
+    </Button>
   );
 }

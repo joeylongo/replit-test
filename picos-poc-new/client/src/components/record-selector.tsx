@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Activity } from "lucide-react";
 import type { SalesforceRecordData } from "@shared/schema";
 
 interface RecordSelectorProps {
@@ -56,30 +57,30 @@ export default function RecordSelector({ onRecordSelected, onError }: RecordSele
       fetchRecordMutation.mutate(value);
     }
   };
-
+  
   return (
     <Card className="mb-8">
       <CardContent className="p-6">
-        <h2 className="text-lg font-semibold text-slate-800 mb-4">
-          Select Sample Record
-        </h2>
-        
-        <div className="max-w-md">
-          <Label htmlFor="sampleRecords" className="text-sm font-medium text-slate-700 mb-2">
-            Choose a sample record to load
-          </Label>
-          <Select onValueChange={handleSampleSelect}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a sample record" />
-            </SelectTrigger>
-            <SelectContent>
-              {samples.map((record: any) => (
-                <SelectItem key={record.id} value={record.id}>
-                  {record.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Activity className="w-5 h-5 text-slate-600" />
+            <span className="text-lg font-semibold text-slate-800">Activity</span>
+          </div>
+          
+          <div className="min-w-[280px]">
+            <Select onValueChange={handleSampleSelect}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a record" />
+              </SelectTrigger>
+              <SelectContent>
+                {samples.map((record: any) => (
+                  <SelectItem key={record.id} value={record.id}>
+                    {record.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardContent>
     </Card>

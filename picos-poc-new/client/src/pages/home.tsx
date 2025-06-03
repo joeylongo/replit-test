@@ -52,11 +52,14 @@ export default function Home() {
     setSelectedRecord(null);
   };
 
+
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* max-w-10xl mx-auto */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         <RecordSelector 
           onRecordSelected={handleRecordSelected}
           onError={handleError}
@@ -70,24 +73,26 @@ export default function Home() {
             </AlertDescription>
           </Alert>
         )}
-
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+{/* :grid-cols-xl2 */}
+        <div className="grid grid-cols-1">
           <RecordDetails 
             record={selectedRecord}
             className="xl:col-span-2"
             onRecordUpdate={handleRecordUpdate}
             fieldGroups={fieldGroups}
+            onAnalyzeActivity={() => setShowExecutionModal(true)}
           />
 
           {selectedRecord && (
             <Dialog open={showExecutionModal} onOpenChange={setShowExecutionModal}>
               <DialogTrigger asChild>
-                <button
+                
+                {/* <button
                   className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   onClick={() => setShowExecutionModal(true)}
                 >
-                  View Execution Details
-                </button>
+                  Analyze Activity
+                </button> */}
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <ExecutionDetails

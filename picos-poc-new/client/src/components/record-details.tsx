@@ -9,6 +9,18 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import type { SalesforceRecordData, FieldConfig } from "@shared/schema";
 import { DEFAULT_FIELD_CONFIG } from "@shared/schema";
+import RecordSelector from "@/components/record-selector";
+import { ChevronDown } from "lucide-react";
+import { Wand2 /* or Sparkles */ } from "lucide-react";
+
+function AnalyzeActivityButton(props: any) {
+  return (
+    <Button onClick={props.onClick} variant="outline" size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 h-10 text-white hover:text-white">
+      <Wand2 className="w-4 h-4 text-white" />
+      AI Analysis
+    </Button>
+  );
+}
 
 interface FieldGroup {
   title: string;
@@ -26,6 +38,7 @@ interface RecordDetailsProps {
   onRecordUpdate?: (updatedData: SalesforceRecordData) => void;
   fieldConfig?: FieldConfig[];
   fieldGroups?: FieldGroup[];
+  onAnalyzeActivity: Function;
 }
 
 export default function RecordDetails({
@@ -33,7 +46,8 @@ export default function RecordDetails({
   className,
   onRecordUpdate,
   fieldConfig = DEFAULT_FIELD_CONFIG,
-  fieldGroups
+  fieldGroups,
+  onAnalyzeActivity
 }: RecordDetailsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<SalesforceRecordData | null>(null);
@@ -102,8 +116,27 @@ export default function RecordDetails({
 
     // View mode
     return (
+      
       <div key={field.key} className="space-y-1">
-        <label className="block text-xs font-medium text-slate-700 mb-1">
+
+          <div className="flex items-center justify-between pb-2">
+            <label className="block text-sm font-medium text-slate-900">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <Edit3 className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+          <div className={cn(
+            "border-b border-gray-300 pb-2",
+          )}>
+            <span className={cn(
+              "text-sm",
+              !value ? "text-slate-400 italic" : "text-slate-900"
+            )}>
+              {value || 'Not set'}
+            </span>
+          </div>
+        {/* <label className="block text-xs font-medium text-slate-700 mb-1">
           {field.label}
           {field.required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -111,7 +144,7 @@ export default function RecordDetails({
           <span className={cn(!value && "text-slate-400 italic")}>
             {value || 'Not set'}
           </span>
-        </div>
+        </div> */}
       </div>
     );
   };
@@ -119,8 +152,9 @@ export default function RecordDetails({
   const currentData = isEditing ? editedData : record?.data;
 
   if (!record) {
-    return (
+    return (<>
       <Card className={className}>
+
         <CardHeader className="border-b border-slate-200">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-800">Record Details</h2>
@@ -139,11 +173,12 @@ export default function RecordDetails({
           </div>
         </CardContent>
       </Card>
-    );
+    </>);
   }
 
-  return (
+  return (<>
     <Card className={className}>
+
       <CardHeader className="border-b border-slate-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -156,14 +191,19 @@ export default function RecordDetails({
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            {/* <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
               {record.type}
-            </Badge>
-            {!isEditing ? (
-              <Button onClick={startEditing} size="sm" variant="outline" className="h-8">
+            </Badge> */}
+            {!isEditing ? (<div className="flex-row">
+              <Button onClick={startEditing} size="sm" variant="outline" className="h-10 mr-2">
                 <Edit3 className="w-3 h-3 mr-1.5" />
                 Edit
               </Button>
+              <AnalyzeActivityButton
+                onClick={onAnalyzeActivity}
+              />
+              </div>
+  
             ) : (
               <div className="flex space-x-1">
                 <Button
@@ -198,10 +238,12 @@ export default function RecordDetails({
 
             return (
             <div key={group.title}>
-                <h3 className="text-sm font-semibold text-slate-700 mb-4">{group.title}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="w-full flex-row p-2 mb-6 category-header">
+                <ChevronDown className="w-6 h-6 text-slate-500" /><h3 className="text-sm font-semibold text-slate-700">{group.title}</h3>
+              </Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {groupFields.map(renderField)}
-                </div>
+              </div>
             </div>
             );
         })
@@ -241,5 +283,5 @@ export default function RecordDetails({
         </div>
       </CardContent>
     </Card>
-  );
+  </>);
 }

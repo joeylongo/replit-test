@@ -92,6 +92,7 @@ export interface FieldConfig {
   required?: boolean;
   placeholder?: string;
   hide?: boolean;
+  options?: string[];
 }
 
 // Default field configuration - customize this for your use case
@@ -107,7 +108,22 @@ export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
   { key: 'Promo_Offer__c', label: 'Promo Offer', type: 'text' },
   { key: 'EDV__c', label: 'EDV', type: 'text' },
   { key: 'Channel_Picklist__c', label: 'Channel', type: 'text' },
-  { key: 'POI_Picklist__c', label: 'POI', type: 'text' },
+  { key: 'POI_Picklist__c', label: 'POI', type: 'text', options: [
+    'Bakery',
+    'Beverage Aisle',
+    'Checkout',
+    'Deli - Prepared & Quick Prep Meals',
+    'End Cap',
+    'Front of Store/Lobby',
+    'Frozen',
+    'Meat/Seafood',
+    'Perimeter',
+    'Pharmacy',
+    'Pharmacy',
+    'Produce',
+    'Seasonal',
+    'Wine Adjacency',
+  ] },
   { key: 'Save_Quantity__c', label: 'Save', type: 'text' },
   { key: 'Price_Type__c', label: 'Price Type', type: 'text' },
   { key: 'Purchase_Quantity__c', label: 'Purchase Quantity', type: 'text' },

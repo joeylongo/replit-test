@@ -1,11 +1,11 @@
-import type { SalesforceRecordData } from "@shared/schema";
+import type { FieldConfig, SalesforceRecordData } from "@shared/schema";
 import ollama from 'ollama'
 
 
 const chat = async (messages: any, format: any) => {
   const res = await ollama.chat({
-    // model: 'gemma3:4b',
-    model: 'qwen2.5-coder:1.5b-base',
+    model: 'gemma3:4b',
+    // model: 'qwen2.5-coder:1.5b-base',
     messages,
     format
   })
@@ -37,6 +37,7 @@ export interface ExecutionDetailsRewrite {
 
 export class RAGWorkflow {
   private recordContext: string = "";
+  private executionDetails: string = "";
 
   async initializeWithRecord(recordData: SalesforceRecordData): Promise<void> {
     // Import the field configuration
@@ -48,7 +49,7 @@ export class RAGWorkflow {
       const displayValue = value || 'Not specified';
       return `- ${field.label}: ${displayValue}`;
     }).join('\n');
-
+    this.executionDetails = recordData.Product_Price_Execution_Direction__c || ''
     this.recordContext = `
 Record Context:
 ${fieldLines}
@@ -193,40 +194,44 @@ Execution Details: ${recordData.Product_Price_Execution_Direction__c || 'No exec
     }
   }
 
-  private async identifyFieldsForAnalysis(recordData: SalesforceRecordData): Promise<{ empty: string[], populated: string[] }> {
+  private async identifyFieldsForAnalysis(recordData: SalesforceRecordData): Promise<{ empty: FieldConfig[], populated: FieldConfig[] }> {
     // Import the field configuration
     const { DEFAULT_FIELD_CONFIG, FIELDS_TO_ANALYZE } = await import('../shared/schema');
 
-    const empty: string[] = [];
-    const populated: string[] = [];
+    const empty: FieldConfig[] = [];
+    const populated: FieldConfig[] = [];
 
     DEFAULT_FIELD_CONFIG.forEach(fieldConfig => {
       if(!FIELDS_TO_ANALYZE.includes(fieldConfig.key)) return
 
       const value = recordData[fieldConfig.key];
       if (!value || value.toString().trim() === '') {
-        empty.push(fieldConfig.key);
+        empty.push(fieldConfig);
       } else {
-        populated.push(fieldConfig.key);
+        populated.push(fieldConfig);
       }
     });
 
     return { empty, populated };
   }
 
-  private async suggestFieldValue(field: string, recordData: SalesforceRecordData): Promise<MissingDataSuggestion | null> {
+  private async suggestFieldValue(field: FieldConfig, recordData: SalesforceRecordData): Promise<MissingDataSuggestion | null> {
     if (!recordData.Product_Price_Execution_Direction__c) {
       return null;
     }
 
-    const currentValue = recordData[field as keyof SalesforceRecordData];
+    const fieldHasOptions = field.options?.length
+    const currentValue = recordData[field.key as keyof SalesforceRecordData];
     const hasCurrentValue = currentValue && currentValue.toString().trim() !== '' && currentValue.toString().trim() !== 'undefined' && currentValue.toString().trim() !== 'null';
+// ${this.recordContext}
+    const prompt = `Analyze the following Execution Details to ${hasCurrentValue ? 'detect LITERAL contradictions for' : 'suggest a value for'} the "${field}" field.
 
-    const prompt = `Analyze the following Salesforce record and execution details to ${hasCurrentValue ? 'detect LITERAL contradictions for' : 'suggest a value for'} the "${field}" field.
+Execution Details:
+${this.executionDetails}
 
-${this.recordContext}
+${hasCurrentValue ? `Current field value: "${currentValue}"` : `The "${field.key}" field is currently empty.`}
 
-${hasCurrentValue ? `Current field value: "${currentValue}"` : `The "${field}" field is currently empty.`}
+${fieldHasOptions ? `The ${field.key} enforces the following options: ${field.options?.join(', ')}.\n only suggest one of the available options.` : `The ${field.key} does not enforce a list of options.`}
 
 ${hasCurrentValue ? `
 IMPORTANT: For populated fields, treat the EXECUTION DETAILS as the source of truth. Only flag as a discrepancy if the execution details contain specific information that contradicts the current field value.
@@ -234,13 +239,10 @@ IMPORTANT: For populated fields, treat the EXECUTION DETAILS as the source of tr
 The execution details are always correct - update the record field to match the execution details when there's a conflict.
 
 Examples of TRUE discrepancies (field should be updated to match execution details):
-- Field shows "1000" employees but execution details say "company has 3500 employees" → Update field to "3500"
-- Field shows "Technology" industry but execution details mention "healthcare industry leader" → Update field to "Healthcare"  
-- Field shows "$50M" revenue but execution details mention "$15M annual revenue" → Update field to "$15M"
-- Field shows "Enterprise" but execution details say "small business with 20 employees" → Update field to "Small Business"
+- The POI_Picklist__c (Point of Interest) field shows "Beverage Aisle" but execution details say "Perimeter Display" → Update field to "Beverage Aisle"
 
 NOT discrepancies:
-- Different levels of detail (e.g., "Software" vs "Enterprise Software Solutions")
+- Different levels of detail (e.g., "Front of store/Lobby" vs "Front of store")
 - Execution details don't mention specific conflicting information
 - Field empty and execution details provide info (that's missing data, not a discrepancy)
 
@@ -260,6 +262,7 @@ Respond with JSON in this exact format:
 
 ${hasCurrentValue ? 'Be very conservative - if in doubt, do not flag as discrepancy. Only flag TRUE contradictions.' : 'Only suggest if confidence is above 60 and clearly mentioned in execution details.'}`;
 
+console.log('PROMPT:', prompt)
     try {
       const messages = [
         {
@@ -405,11 +408,13 @@ Please color code the "Activity Type" where "Execute" is red, "Sell" is gray, an
         },
         required: [
           "hasSuggestion",
+          "suggestedValue",
           "confidence",
           "reasoning",
           "isDiscrepancy",
         ],
       })
+      console.log('RESPONSE:', response)
       const parsed = JSON.parse(response || "{}");
       // const response = await openai.chat.completions.create({
       //   model: "gpt-4o",
@@ -422,8 +427,8 @@ Please color code the "Activity Type" where "Execute" is red, "Sell" is gray, an
       
       if (parsed.hasSuggestion && parsed.confidence >= 60) {
         return {
-          field,
-          currentValue: recordData[field as keyof SalesforceRecordData],
+          field: field.key,
+          currentValue: recordData[field.key as keyof SalesforceRecordData],
           suggestedValue: parsed.suggestedValue,
           confidence: parsed.confidence,
           reasoning: parsed.reasoning,

@@ -367,6 +367,9 @@ Pillar Programs:
       console.log('RESPONSE:', response)
       const parsed = JSON.parse(response || "{}");
 
+      if(recordData[field.key]?.trim()?.toLowerCase() == parsed.suggestedValue?.trim()?.toLowerCase()) {
+        return null
+      }
       if (parsed.hasSuggestion && parsed.confidence >= 60) {
         return {
           field: field.key,

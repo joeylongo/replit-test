@@ -428,9 +428,6 @@ Output: &nbsp;<em>Run tests</em>`
   }
 
   private async rewriteExecutionDetails(recordData: SalesforceRecordData): Promise<ExecutionDetailsRewrite | null> {
-    if (!recordData.Product_Price_Execution_Direction__c) {
-      return null;
-    }
 
     try {
       // const openai = new (await import('openai')).default({

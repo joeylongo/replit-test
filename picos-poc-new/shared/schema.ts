@@ -152,11 +152,11 @@ export const FIELD_PROMPT_CONFIG: Record<string, {
         - NOTE: The key difference between Must Buy and Each is how it reads in the store to the customer.
         - NOTE: Use Promo_Offer__c to clarify between Must Buy and Simple - for example, if the Execution Details say 1/$6.5 but the Promo_Offer__c value is 2/$13, the customer MUST buy 2 making it Buy Get.
 
-      Simple: Similar to Must Buy and Each but consumer will get the promotion even if they don’t pick up the required purchased quantity.
+      Simple: Similar to Must Buy and Each but consumer will get the promotional price even if they don’t pick up the required purchased quantity.
         - Example: 1/$1.49 Simple
         - NOTE: Use Promo_Offer__c to clarify between Must Buy and Simple - for example, if the Execution Details say 2/$13 but the Promo_Offer__c value is 1/$6.50, the customer doesn't have to buy 2 making it Simple.
       
-      Buy Get: Consumer will need to buy required quantity to get X amount of product free. Purchase_Quantity__c MUST be greater than 1 for the promotion to qualify for a Buy Get.
+      Buy Get: Consumer will need to buy required quantity to get X amount of product free. Purchase_Quantity__c MUST be greater than 1 for the promotion to qualify for a Buy Get. 
         - Example: B2G2F
 
       Buy Save: Consumer needs to buy required quantity to save a dollar amount. Purchase_Quantity__c MUST be greater than 1 for the promotion to qualify for a Buy Save.
@@ -243,10 +243,10 @@ export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
 ];
 
 export const FIELDS_TO_ANALYZE = [
-  "POI_Picklist__c",
-  "Activity_type__c",
+  // "POI_Picklist__c",
+  // "Activity_type__c",
   "Promo_Type__c",
-  "Pricing__c",
-  "Package_Detail__c",
-  "Activity_Name__c"
+  // "Pricing__c",
+  // "Package_Detail__c",
+  // "Activity_Name__c"
 ]

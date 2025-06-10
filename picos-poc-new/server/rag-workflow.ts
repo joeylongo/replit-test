@@ -7,7 +7,7 @@ import pLimit from 'p-limit'
 // Chat wrapper
 const chat = async (messages: any, format: any) => {
   const res = await ollama.chat({
-    model: 'gemma3:4b',
+    model: 'gemma3:12b',
     messages,
     format
   });
@@ -205,12 +205,12 @@ ${hasCurrentValue && promptConfig.improvementStyle === 'literal'
   : `Only suggest a suggestedValue if confidence is above 60 and your suggestion is clearly better given info specifically mentioned in execution details.`}
 `;
 
-console.log('PROMPT:', prompt)
+
     try {
       const messages = [
         {
           role: "system",
-          content: `You are an AI agent with knowledge about how a beverage company relays promotion execution strategy to front line sales.
+          content: `You are an AI agent with knowledge about how Coca-Cola relays promotion execution strategy to front line sales.
 The company has promotions which involve setting up special product displays in-store.
 You are in the execution enablement group which is responsible for keeping track of the promotions and articulating to front-line sales people about how to set up the displays.
 This groups creates a PicOS (Picture of Success) record in salesforce that tracks the promotion (for example, "March Madness") and the bottlers the promotion affects.
@@ -273,6 +273,7 @@ Pillar Programs:
           content: prompt
         }
       ]
+
       const response = await chat(messages, {
         type: "object",
         properties: {

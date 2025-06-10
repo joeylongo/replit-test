@@ -161,6 +161,9 @@ export class RAGWorkflow {
 Execution Details:
 ${this.executionDetails}
 
+Full Salesforce Record:
+${this.recordContext}
+
 ${hasCurrentValue ? `Current field value: "${currentValue}"` : `The "${field.key}" field is currently empty.`}
 
 ${fieldHasOptions 
@@ -205,7 +208,7 @@ ${hasCurrentValue && promptConfig.improvementStyle === 'literal'
   : `Only suggest a suggestedValue if confidence is above 60 and your suggestion is clearly better given info specifically mentioned in execution details.`}
 `;
 
-
+console.log('PROMPT', prompt)
     try {
       const messages = [
         {

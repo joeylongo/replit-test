@@ -142,28 +142,16 @@ export const FIELD_PROMPT_CONFIG: Record<string, {
   Promo_Type__c: {
     improvementStyle: 'suggestive',
     customPrompt: `
-    Determine the type of promotion being run based on the following guidance:
-    
-      Each: Consumer will pay a unit price if they purchase a required quantity.
-        - Example: $7.99 wyb 3
+    *   **Focus on the customer's action to receive the offer.** What does the customer *need to do* to get the price?
+    **Definitions (Important – use these!):**
 
-      Must Buy: Consumer will pay a unit price if they purchase a required quantity, but total price will be on the tag.
-        - Example: 2/$3.00MB
-        - NOTE: The key difference between Must Buy and Each is how it reads in the store to the customer.
-        - NOTE: Use Promo_Offer__c to clarify between Must Buy and Simple - for example, if the Execution Details say 1/$6.5 but the Promo_Offer__c value is 2/$13, the customer MUST buy 2 making it Buy Get.
-
-      Simple: Similar to Must Buy and Each but consumer will get the promotional price even if they don’t pick up the required purchased quantity.
-        - Example: 1/$1.49 Simple
-        - NOTE: Use Promo_Offer__c to clarify between Must Buy and Simple - for example, if the Execution Details say 2/$13 but the Promo_Offer__c value is 1/$6.50, the customer doesn't have to buy 2 making it Simple.
-      
-      Buy Get: Consumer will need to buy required quantity to get X amount of product free. Purchase_Quantity__c MUST be greater than 1 for the promotion to qualify for a Buy Get. 
-        - Example: B2G2F
-
-      Buy Save: Consumer needs to buy required quantity to save a dollar amount. Purchase_Quantity__c MUST be greater than 1 for the promotion to qualify for a Buy Save.
-        - Example: B2S1.00$
-
-      Other: Any other account specific promo offer.
-        - Example: Digital Consumer Coupon available
+    *   **Each:** Consumer pays a single price for one item.
+    *   **Must Buy:** Consumer pays a single price for one item, but must purchase another item to get the discount.
+    *   **Buy Get:** Consumer buys one item and gets another for free or at a reduced price. Requires a “get” quantity.
+    *   **Buy Save:** Consumer buys a specific quantity and receives a discounted total price.
+    *   **Simple:** Consumer receives a discount or special price without needing to purchase additional items or meet specific quantity requirements.
+    *   **Other:** Used for promotions that don't fit any other category.
+    *   **N/A:** Promotion doesn’t apply.
 
       None: This will be prepopulated if an activity is not promo related.
         Be accurate — if no pricing or mechanics are described, return N/A. Only suggest a value if you are confident based on the promo format.
@@ -192,6 +180,8 @@ export const FIELD_PROMPT_CONFIG: Record<string, {
         - "8pk mini cans"
       Do NOT include price or location. Only describe the package being featured. If multiple packages are mentioned,
       choose the most prominent. If no packaging detail is clear, return null.
+
+      If the Excecution Details contain less detail than the current Package_Detail__c (Package Detail) Salesforce Record field, then use the existing value. Use whichever is more detailed.
       
       `,
     confidenceThreshold: 90
@@ -243,10 +233,10 @@ export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
 ];
 
 export const FIELDS_TO_ANALYZE = [
-  // "POI_Picklist__c",
-  // "Activity_type__c",
+  "POI_Picklist__c",
+  "Activity_type__c",
   "Promo_Type__c",
-  // "Pricing__c",
-  // "Package_Detail__c",
-  // "Activity_Name__c"
+  "Pricing__c",
+  "Package_Detail__c",
+  "Activity_Name__c"
 ]

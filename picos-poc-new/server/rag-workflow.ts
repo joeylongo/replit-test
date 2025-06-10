@@ -7,7 +7,7 @@ import pLimit from 'p-limit'
 // Chat wrapper
 const chat = async (messages: any, format: any) => {
   const res = await ollama.chat({
-    model: 'gemma3:12b',
+    model: 'gemma3:4b',
     messages,
     format
   });
@@ -156,10 +156,7 @@ export class RAGWorkflow {
     const hasCurrentValue = currentValue && currentValue.toString().trim() !== '' && currentValue.toString().trim() !== 'undefined' && currentValue.toString().trim() !== 'null';
 // ${this.recordContext}
     let prompt: string;
-    if (promptConfig.customPrompt) {
-      prompt = promptConfig.customPrompt;
-    } else {
-      prompt = `Analyze the following Execution Details to ${hasCurrentValue && promptConfig.improvementStyle === 'literal' ? `detect LITERAL contradictions for` : `suggest an improved value for`} the "${field.key}" field.
+      prompt = `You are a Coca-Cola analyst assistant. Analyze the following Execution Details to ${hasCurrentValue && promptConfig.improvementStyle === 'literal' ? `detect LITERAL contradictions for` : `suggest an improved value for`} the "${field.key}" field.
 
 Execution Details:
 ${this.executionDetails}
@@ -192,6 +189,8 @@ For this field, instead of being literal in your comparison, analyze the executi
 If the value is already satisfactory and is not empty, don't provide any suggestion and set "hasSuggest": false.
 `}
 
+${promptConfig.customPrompt}
+
 Respond with JSON in this exact format:
 {
   "hasSuggestion": boolean,
@@ -205,7 +204,7 @@ ${hasCurrentValue && promptConfig.improvementStyle === 'literal'
   ? `Be very conservative - if in doubt, do not flag as discrepancy. Only flag TRUE contradictions.`
   : `Only suggest a suggestedValue if confidence is above 60 and your suggestion is clearly better given info specifically mentioned in execution details.`}
 `;
-    }
+
 console.log('PROMPT:', prompt)
     try {
       const messages = [
@@ -292,7 +291,7 @@ Pillar Programs:
         ],
       })
       console.log('RESPONSE:', response)
-      const parsed = JSON.parse(response || "{}");
+      const parsed = JSON.parse(response?.replace(/pepsi/gi, 'Coke') || "{}");
 
       const current = recordData[field.key];
       const normalizedCurrent = typeof current === 'string' ? current.trim().toLowerCase() : String(current || '').trim().toLowerCase();
@@ -301,7 +300,7 @@ Pillar Programs:
       if (normalizedCurrent === normalizedSuggestion) {
         return null;
       }
-      const confidenceNum = Math.round(parsed.confidence * 100);
+      const confidenceNum = Math.round(parsed.confidence);
       console.log("CONFIDENCE: " , confidenceNum);
       const threshold = promptConfig.confidenceThreshold ?? 60;
       if (parsed.hasSuggestion && confidenceNum >= threshold) {
@@ -473,7 +472,7 @@ Pillar Programs:
       required: ["rewrittenText", "improvements", "confidence"]
     });
 
-      const result = JSON.parse(response || "{}");
+      const result = JSON.parse(response?.replace(/pepsi/gi, 'Coke') || "{}");
     console.log('RESPONSE', response)
       // const response = await openai.chat.completions.create({
       //   model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user

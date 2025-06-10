@@ -103,7 +103,8 @@ export const FIELD_PROMPT_CONFIG: Record<string, {
 }> = {
   POI_Picklist__c: {
     improvementStyle: 'literal',
-    customPrompt: `Based on the execution details, what is the most accurate in-store display location (POI) for this activity? 
+    customPrompt: `
+    Please respond with what is the most accurate in-store display location (POI) for this activity.
       Only choose a value from the allowed list. This field describes where the display or product is located (e.g., Front of Store,
       End Cap, Beverage Aisle, etc.). If the execution details are ambiguous, do not make assumptions. If the location is clearly
       stated (e.g., "place in perimeter" or "checkout display"), match to the closest POI value.`,
@@ -127,54 +128,78 @@ export const FIELD_PROMPT_CONFIG: Record<string, {
   },
   Activity_type__c: {
     improvementStyle: 'literal',
-    customPrompt: `Based on the execution details, what kind of activity is being described?
+    customPrompt: ` What kind of activity is being described?
       Choose only from: Execute, Sell, Hunt, Verify.
         - Use "Execute" if the activity refers to carrying out a HQ directive or display setup or if the current value is "Headquarter Mandated (HQM)" or something very similar.
         - Use "Sell" if the activity is about convincing the store to take action or order product or if the current value is "Local Sell In (LSI)" or something very similar.
         - Use "Hunt" if it's exploratory or chasing whitespace.
         - Use "Verify" if it involves checking whether something was done.
-      If the current value contradicts this logic, suggest the correct one. Otherwise, do not suggest any change.`,
+      If the current value contradicts this logic, suggest the correct one. Otherwise, do not suggest any change.
+      `,
     options: ['Execute', 'Sell', 'Hunt', 'Verify'],
     confidenceThreshold: 90
   },
   Promo_Type__c: {
-    improvementStyle: 'literal',
-    customPrompt: `Review the execution details and determine the type of promotion being run.
-      Choose from: Buy Get, Buy Save, Each, Must Buy, Other, V Simple, N/A.
-      Example mappings:
-        - "Buy 2 Get 1 Free" → Buy Get
-        - "2/$4" or "$5.99 for 12pk" → Buy Save
-        - "Each at $0.99" → Each
-        - "Buy 3 or more for a deal" → Must Buy
-      Be accurate — if no pricing or mechanics are described, return N/A. Only suggest a value if you are confident based on the promo format.`,
-    options: ['Buy Get', 'Buy Save', 'Each', 'Must Buy', 'Other', 'V Simple', 'N/A'],
+    improvementStyle: 'suggestive',
+    customPrompt: `
+    Determine the type of promotion being run based on the following guidance:
+    
+      Each: Consumer will pay a unit price if they purchase a required quantity.
+        - Example: $7.99 wyb 3
+
+      Must Buy: Consumer will pay a unit price if they purchase a required quantity, but total price will be on the tag.
+        - Example: 2/$3.00MB
+        - NOTE: The key difference between Must Buy and Each is how it reads in the store to the customer.
+        - NOTE: Use Promo_Offer__c to clarify between Must Buy and Simple - for example, if the Execution Details say 1/$6.5 but the Promo_Offer__c value is 2/$13, the customer MUST buy 2 making it Buy Get.
+
+      Simple: Similar to Must Buy and Each but consumer will get the promotion even if they don’t pick up the required purchased quantity.
+        - Example: 1/$1.49 Simple
+        - NOTE: Use Promo_Offer__c to clarify between Must Buy and Simple - for example, if the Execution Details say 2/$13 but the Promo_Offer__c value is 1/$6.50, the customer doesn't have to buy 2 making it Simple.
+      
+      Buy Get: Consumer will need to buy required quantity to get X amount of product free. Purchase_Quantity__c MUST be greater than 1 for the promotion to qualify for a Buy Get.
+        - Example: B2G2F
+
+      Buy Save: Consumer needs to buy required quantity to save a dollar amount. Purchase_Quantity__c MUST be greater than 1 for the promotion to qualify for a Buy Save.
+        - Example: B2S1.00$
+
+      Other: Any other account specific promo offer.
+        - Example: Digital Consumer Coupon available
+
+      None: This will be prepopulated if an activity is not promo related.
+        Be accurate — if no pricing or mechanics are described, return N/A. Only suggest a value if you are confident based on the promo format.
+    `,
+    options: ['Buy Get', 'Buy Save', 'Each', 'Must Buy', 'Other', 'Simple', 'N/A'],
     confidenceThreshold: 90
   },
   Pricing__c: {
     improvementStyle: 'suggestive',
     customPrompt: `Extract the price being promoted in this activity, if mentioned.
-      This could be:
-        - A single item price (e.g., "$1.99")
-        - A bundle price (e.g., "2 for $4", "3/$10")
+      This must be a single item price (e.g., "$1.99")
+      If the execution details refer to a bundle price (e.g., "2 for $4", "3/$10"), please suggest the 1-unit price. For example: 2/$4 -> $2.
         - A tag like "TPR" or "EDV" if that's the only reference
-      If pricing is mentioned in multiple ways, use the clearest and most consumer-facing one. If no pricing is mentioned, skip this field. Return null if nothing price-related is present.`,
+      If pricing is mentioned in multiple ways, use the clearest and most consumer-facing one. If no pricing is mentioned, skip this field. Return null if nothing price-related is present.
+
+    `,
     confidenceThreshold: 90
   },
   Package_Detail__c: {
     improvementStyle: 'suggestive',
-    customPrompt: `Based on the execution details, extract the product packaging format being referenced.
+    customPrompt: `Extract the product packaging format being referenced.
       Examples:
         - "12-pack Core CAN"
         - "6-pack Half Liter"
         - "20oz PET"
         - "8pk mini cans"
       Do NOT include price or location. Only describe the package being featured. If multiple packages are mentioned,
-      choose the most prominent. If no packaging detail is clear, return null.`,
+      choose the most prominent. If no packaging detail is clear, return null.
+      
+      `,
     confidenceThreshold: 90
   },
   Activity_Name__c: {
     improvementStyle: 'suggestive',
-    customPrompt: `Suggest a concise, action-oriented name for this activity based on the execution details.
+    customPrompt: `
+    Suggest a concise, action-oriented name for this activity.
       Good names summarize the key action, brand, or product — not the entire sentence.
       Examples:
         - "Fanta Halloween Display"
@@ -206,7 +231,7 @@ export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
   { key: 'Purchase_Quantity__c', label: 'Purchase Quantity', type: 'text' },
   { key: 'Market_Street_Challenge__c', label: 'Market Street Challenge', type: 'text' },
   { key: 'Late_break__c', label: 'Late-break', type: 'text' },
-  { key: 'Promo_Type__c', label: 'Promo Type', type: 'text', 
+  { key: 'Promo_Type__c', label: 'Promo Type', type: 'text',
 },
   { key: 'Of_Stores__c', label: '% Of Stores', type: 'text' },
   { key: 'Package_Detail__c', label: 'Package Detail', type: 'text' },

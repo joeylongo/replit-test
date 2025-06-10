@@ -129,8 +129,8 @@ export const FIELD_PROMPT_CONFIG: Record<string, {
     improvementStyle: 'literal',
     customPrompt: `Based on the execution details, what kind of activity is being described?
       Choose only from: Execute, Sell, Hunt, Verify.
-        - Use "Execute" if the activity refers to carrying out a HQ directive or display setup.
-        - Use "Sell" if the activity is about convincing the store to take action or order product.
+        - Use "Execute" if the activity refers to carrying out a HQ directive or display setup or if the current value is "Headquarter Mandated (HQM)" or something very similar.
+        - Use "Sell" if the activity is about convincing the store to take action or order product or if the current value is "Local Sell In (LSI)" or something very similar.
         - Use "Hunt" if it's exploratory or chasing whitespace.
         - Use "Verify" if it involves checking whether something was done.
       If the current value contradicts this logic, suggest the correct one. Otherwise, do not suggest any change.`,

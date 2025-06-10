@@ -1,19 +1,20 @@
+// Imports
 import type { FieldConfig, SalesforceRecordData } from "@shared/schema";
 import { FIELD_PROMPT_CONFIG } from "@shared/schema";
 import ollama from 'ollama'
+import pLimit from 'p-limit'
 
-
+// Chat wrapper
 const chat = async (messages: any, format: any) => {
   const res = await ollama.chat({
     model: 'gemma3:12b',
-    // model: 'gemma3:4b',
-    // model: 'qwen2.5-coder:1.5b-base',
     messages,
     format
-  })
-  return res.message.content
-}
+  });
+  return res.message.content;
+};
 
+// Interfaces
 export interface AnalysisStep {
   step: number;
   type: 'analysis' | 'suggestion' | 'complete';
@@ -27,7 +28,7 @@ export interface MissingDataSuggestion {
   suggestedValue: string;
   confidence: number;
   reasoning: string;
-  isDiscrepancy: boolean; // true if correcting existing data, false if filling empty field
+  isDiscrepancy: boolean;
   improvementStyle: string;
   isEmpty?: boolean;
 }
@@ -39,152 +40,75 @@ export interface ExecutionDetailsRewrite {
   confidence: number;
 }
 
+// Main Workflow Class
 export class RAGWorkflow {
   private recordContext: string = "";
   private executionDetails: string = "";
 
   async initializeWithRecord(recordData: SalesforceRecordData): Promise<void> {
-    // Import the field configuration
     const { DEFAULT_FIELD_CONFIG } = await import('../shared/schema');
-    
-    // Build record context dynamically from field configuration
     const fieldLines = DEFAULT_FIELD_CONFIG.map(field => {
       const value = recordData[field.key];
-      const displayValue = value || 'Not specified';
-      return `- ${field.label}: ${displayValue}`;
+      return `- ${field.label}: ${value || 'Not specified'}`;
     }).join('\n');
-    this.executionDetails = recordData.Product_Price_Execution_Direction__c || ''
-    this.recordContext = `
-Record Context:
-${fieldLines}
-
-Execution Details: ${recordData.Product_Price_Execution_Direction__c || 'No execution details provided'}
-`.trim();
+    this.executionDetails = recordData.Product_Price_Execution_Direction__c || '';
+    this.recordContext = `Record Context:\n${fieldLines}\n\nExecution Details: ${this.executionDetails}`.trim();
   }
 
   async *analyzeRecordForMissingData(recordData: SalesforceRecordData): AsyncGenerator<AnalysisStep> {
-    // Step 1: Initialize
-    yield {
-      step: 1,
-      type: 'analysis',
-      message: 'Initializing analysis workflow...'
-    };
-    
-    if (!this.recordContext) {
-      await this.initializeWithRecord(recordData);
-    }
-    
-    yield {
-      step: 1,
-      type: 'complete',
-      message: 'Analysis workflow initialized successfully'
-    };
+    yield { step: 1, type: 'analysis', message: 'Initializing analysis workflow...' };
+    if (!this.recordContext) await this.initializeWithRecord(recordData);
+    yield { step: 1, type: 'complete', message: 'Analysis workflow initialized successfully' };
 
-    // Step 2: Analyze fields
-    yield {
-      step: 2,
-      type: 'analysis',
-      message: 'Scanning record fields for missing data...'
-    };
+    yield { step: 2, type: 'analysis', message: 'Scanning record fields for missing data...' };
+    const { empty, populated } = await this.identifyFieldsForAnalysis(recordData);
+    yield { step: 2, type: 'complete', message: `Found ${empty.length} empty fields and ${populated.length} populated fields to verify` };
 
-    const fieldsToAnalyze = await this.identifyFieldsForAnalysis(recordData);
-    
-    yield {
-      step: 2,
-      type: 'complete',
-      message: `Found ${fieldsToAnalyze.empty.length} empty fields and ${fieldsToAnalyze.populated.length} populated fields to verify`
-    };
+    yield { step: 3, type: 'analysis', message: 'Analyzing execution details for contextual insights...' };
+    yield { step: 3, type: 'complete', message: 'Execution details analyzed successfully' };
 
-    // Step 3: Analyze all fields for missing data and discrepancies
-    yield {
-      step: 3,
-      type: 'analysis',
-      message: 'Analyzing execution details for contextual insights...'
-    };
-
-    yield {
-      step: 3,
-      type: 'complete',
-      message: 'Execution details analyzed successfully'
-    };
-
-    // Step 4: Generate suggestions
-    yield {
-      step: 4,
-      type: 'analysis',
-      message: 'Generating AI-powered suggestions...'
-    };
+    yield { step: 4, type: 'analysis', message: 'Generating AI-powered suggestions in parallel...' };
+    const fieldList = [...empty, ...populated];
+    const limit = pLimit(1);
+    const results = await Promise.allSettled(fieldList.map(field =>
+      limit(() => this.suggestFieldValue(field, recordData))
+    ));
+    //const results = await Promise.allSettled(fieldList.map(field => this.suggestFieldValue(field, recordData)));
 
     const suggestions: MissingDataSuggestion[] = [];
-    
-    // Analyze empty fields for suggestions
-    for (const field of fieldsToAnalyze.empty) {
-      const suggestion = await this.suggestFieldValue(field, recordData);
-      if (suggestion && suggestion.confidence >= 90) {
-        const fieldConfig = FIELD_PROMPT_CONFIG[field.key]
-        const isDiscrepancy = true
-        suggestions.push({...suggestion, isDiscrepancy, improvementStyle: fieldConfig.improvementStyle, isEmpty: true });
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      const field = fieldList[i];
+      const promptConfig = FIELD_PROMPT_CONFIG[field.key];
+      if (result.status === 'fulfilled' && result.value && result.value.confidence >= 90) {
+        suggestions.push({
+          ...result.value,
+          improvementStyle: promptConfig.improvementStyle,
+          isEmpty: empty.includes(field),
+          isDiscrepancy: promptConfig.improvementStyle === 'literal'
+        });
       }
     }
 
-    // Analyze populated fields for discrepancies
-    for (const field of fieldsToAnalyze.populated) {
-      const suggestion = await this.suggestFieldValue(field, recordData);
-      if (suggestion && suggestion.confidence >= 90) {
-        const fieldConfig = FIELD_PROMPT_CONFIG[field.key]
-        const isDiscrepancy = fieldConfig.improvementStyle === 'literal' ? true : false
-        suggestions.push({...suggestion, isDiscrepancy, improvementStyle: fieldConfig.improvementStyle } );
-      }
-    }
-
-    yield {
-      step: 4,
-      type: 'complete',
-      message: `Generated ${suggestions.length} high-confidence suggestions`
-    };
+    yield { step: 4, type: 'complete', message: `Generated ${suggestions.length} high-confidence suggestions` };
 
     if (suggestions.length > 0) {
       yield {
         step: 5,
         type: 'suggestion',
-        message: `Found ${suggestions.filter(s => !s.isDiscrepancy).length} missing data suggestions and ${suggestions.filter(s => s.isDiscrepancy).length} data discrepancies.`,
+        message: `Found ${suggestions.filter(s => !s.isDiscrepancy).length} missing data suggestions and ${suggestions.filter(s => s.isDiscrepancy).length} discrepancies`,
         data: { suggestions }
       };
+      yield { step: 6, type: 'complete', message: 'Please resolve field suggestions first, then execution details will be analyzed with updated data' };
     } else {
-      yield {
-        step: 5,
-        type: 'complete',
-        message: 'No field enhancements needed - all data appears complete.'
-      };
-    }
-
-    // Note: Execution details analysis will be triggered separately after field updates are resolved
-    if (suggestions.length > 0) {
-      yield {
-        step: 6,
-        type: 'complete',
-        message: 'Please resolve field suggestions first, then execution details will be analyzed with updated data'
-      };
-    } else {
-      // No field suggestions, proceed directly to execution details
       yield* this.analyzeExecutionDetails(recordData);
     }
   }
 
   async *analyzeExecutionDetails(recordData: SalesforceRecordData): AsyncGenerator<AnalysisStep> {
-    yield {
-      step: 7,
-      type: 'analysis',
-      message: 'Analyzing execution details for improvement opportunities...'
-    };
-
+    yield { step: 7, type: 'analysis', message: 'Analyzing execution details for improvement opportunities...' };
     const executionRewrite = await this.rewriteExecutionDetails(recordData);
-
-    yield {
-      step: 7,
-      type: 'complete',
-      message: 'Execution details analysis completed'
-    };
+    yield { step: 7, type: 'complete', message: 'Execution details analysis completed' };
 
     if (executionRewrite) {
       yield {
@@ -194,24 +118,17 @@ Execution Details: ${recordData.Product_Price_Execution_Direction__c || 'No exec
         data: { executionRewrite }
       };
     } else {
-      yield {
-        step: 8,
-        type: 'complete',
-        message: 'Execution details are already well-written.'
-      };
+      yield { step: 8, type: 'complete', message: 'Execution details are already well-written.' };
     }
   }
 
   private async identifyFieldsForAnalysis(recordData: SalesforceRecordData): Promise<{ empty: FieldConfig[], populated: FieldConfig[] }> {
-    // Import the field configuration
     const { DEFAULT_FIELD_CONFIG, FIELDS_TO_ANALYZE } = await import('../shared/schema');
-
     const empty: FieldConfig[] = [];
     const populated: FieldConfig[] = [];
 
     DEFAULT_FIELD_CONFIG.forEach(fieldConfig => {
-      if(!FIELDS_TO_ANALYZE.includes(fieldConfig.key)) return
-
+      if (!FIELDS_TO_ANALYZE.includes(fieldConfig.key)) return;
       const value = recordData[fieldConfig.key];
       if (!value || value.toString().trim() === '') {
         empty.push(fieldConfig);
@@ -223,17 +140,26 @@ Execution Details: ${recordData.Product_Price_Execution_Direction__c || 'No exec
     return { empty, populated };
   }
 
+  // You already have suggestFieldValue and rewriteExecutionDetails defined elsewhere — include them here.
   private async suggestFieldValue(field: FieldConfig, recordData: SalesforceRecordData): Promise<MissingDataSuggestion | null> {
     if (!recordData.Product_Price_Execution_Direction__c) {
       return null;
     }
 
     const promptConfig = FIELD_PROMPT_CONFIG[field.key]
+    if (!promptConfig) {
+      console.warn(`Missing prompt config for field ${field.key}`);
+      return null;
+    }
     const fieldHasOptions = promptConfig.options?.length
     const currentValue = recordData[field.key as keyof SalesforceRecordData];
     const hasCurrentValue = currentValue && currentValue.toString().trim() !== '' && currentValue.toString().trim() !== 'undefined' && currentValue.toString().trim() !== 'null';
 // ${this.recordContext}
-    const prompt = `Analyze the following Execution Details to ${hasCurrentValue && promptConfig.improvementStyle === 'literal' ? `detect LITERAL contradictions for` : `suggest an improved value for`} the "${field.key}" field.
+    let prompt: string;
+    if (promptConfig.customPrompt) {
+      prompt = promptConfig.customPrompt;
+    } else {
+      prompt = `Analyze the following Execution Details to ${hasCurrentValue && promptConfig.improvementStyle === 'literal' ? `detect LITERAL contradictions for` : `suggest an improved value for`} the "${field.key}" field.
 
 Execution Details:
 ${this.executionDetails}
@@ -279,7 +205,7 @@ ${hasCurrentValue && promptConfig.improvementStyle === 'literal'
   ? `Be very conservative - if in doubt, do not flag as discrepancy. Only flag TRUE contradictions.`
   : `Only suggest a suggestedValue if confidence is above 60 and your suggestion is clearly better given info specifically mentioned in execution details.`}
 `;
-
+    }
 console.log('PROMPT:', prompt)
     try {
       const messages = [
@@ -368,17 +294,26 @@ Pillar Programs:
       console.log('RESPONSE:', response)
       const parsed = JSON.parse(response || "{}");
 
-      if(recordData[field.key]?.trim()?.toLowerCase() == parsed.suggestedValue?.trim()?.toLowerCase()) {
-        return null
+      const current = recordData[field.key];
+      const normalizedCurrent = typeof current === 'string' ? current.trim().toLowerCase() : String(current || '').trim().toLowerCase();
+      const normalizedSuggestion = typeof parsed.suggestedValue === 'string' ? parsed.suggestedValue.trim().toLowerCase() : String(parsed.suggestedValue || '').trim().toLowerCase();
+
+      if (normalizedCurrent === normalizedSuggestion) {
+        return null;
       }
-      if (parsed.hasSuggestion && parsed.confidence >= 60) {
+      const confidenceNum = Math.round(parsed.confidence * 100);
+      console.log("CONFIDENCE: " , confidenceNum);
+      const threshold = promptConfig.confidenceThreshold ?? 60;
+      if (parsed.hasSuggestion && confidenceNum >= threshold) {
         return {
           field: field.key,
-          currentValue: recordData[field.key as keyof SalesforceRecordData],
+          currentValue: recordData[field.key],
           suggestedValue: parsed.suggestedValue,
-          confidence: parsed.confidence,
+          confidence: confidenceNum,
           reasoning: parsed.reasoning,
           isDiscrepancy: parsed.isDiscrepancy || false,
+          improvementStyle: promptConfig.improvementStyle,
+          isEmpty: !recordData[field.key]
         };
       }
       
@@ -389,50 +324,7 @@ Pillar Programs:
     }
   }
 
-  private async stripExecutePrefix(sentence: string): Promise<string> {
-    console.log('stripExecutePrefix sentence', sentence)
-
-    const response = await chat([
-      {
-        role: 'system',
-        content: `You are “HTML-Sanitizer AI.”
-Your single task is to remove a leading 'Execute' directive from an HTML fragment and return the fragment exactly as you received it, minus that directive.
-
-A directive is any case-insensitive variant of Execute (e.g. execute, EXECUTE) immediately followed by an optional space and either a colon (:) or dash (-).
-
-The directive may be wrapped in one or more inline tags such as <b>, <strong>, <i>, <span>, or <p>.
-
-Delete the directive and every tag that exists only to hold the directive.
-
-Do not modify any other character, tag, attribute, or whitespace.
-
-Output only the sanitized HTML, with no extra text, comments, or Markdown fence.
-
-Examples
-Input: <p><b>Execute:</b> Sell 10-pack</p>
-Output: <p>Sell 10-pack</p>
-
-Input: <span>EXECUTE :</span>&nbsp;<em>Run tests</em>
-Output: &nbsp;<em>Run tests</em>`
-      },
-      {role: 'user', message: `Sanitize this HTML: ${sentence}`}
-    ], {
-      type: "object",
-      properties: {
-        sanitized: { type: 'string' },
-      },
-      required: ["sanitized",]
-    });
-    return JSON.parse(response || "{}").sanitized
-    return sentence.replace(
-      //  ^ optional whitespace   execute   optional spaces   : or -   optional spaces
-      /^\s*execute\s*[:\-]\s*/i,
-      '',
-    );
-  }
-
   private async rewriteExecutionDetails(recordData: SalesforceRecordData): Promise<ExecutionDetailsRewrite | null> {
-
     try {
       // const openai = new (await import('openai')).default({
       //   apiKey: process.env.OPENAI_API_KEY
@@ -600,7 +492,7 @@ Output: &nbsp;<em>Run tests</em>`
       
       if (result.rewrittenText && result.confidence >= 60) {
         return {
-          currentText: recordData.Product_Price_Execution_Direction__c,
+          currentText: recordData.Product_Price_Execution_Direction__c || '',
           rewrittenText,
           improvements: result.improvements || [],
           confidence: result.confidence || 75
@@ -609,8 +501,8 @@ Output: &nbsp;<em>Run tests</em>`
 
       // Fallback if AI doesn't provide rewritten text - should not happen with new prompt
       return {
-        currentText: recordData.Product_Price_Execution_Direction__c,
-        rewrittenText: recordData.Product_Price_Execution_Direction__c, // + " [Enhanced with improved formatting and clarity.]",
+        currentText: recordData.Product_Price_Execution_Direction__c || '',
+        rewrittenText: recordData.Product_Price_Execution_Direction__c || '', // + " [Enhanced with improved formatting and clarity.]",
         improvements: ["Enhanced formatting and structure"],
         confidence: 50
       };
@@ -620,5 +512,4 @@ Output: &nbsp;<em>Run tests</em>`
       return null;
     }
   }
-
 }

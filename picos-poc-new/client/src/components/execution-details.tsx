@@ -149,8 +149,12 @@ export default function ExecutionDetails({ record, className, onRecordUpdate, on
             setCompletedSteps(prev => new Set([...prev, step.step]));
           }
           
-          if (data.stepType === 'suggestion' && data.data?.executionRewrite) {
-            // Convert single rewrite into 3 options with variations
+        if (data.stepType === 'suggestion') {
+          if (data.data?.suggestions?.length > 0) {
+            setSuggestions(prev => [...prev, ...data.data.suggestions]);
+          }
+
+          if (data.data?.executionRewrite) {
             const baseRewrite = data.data.executionRewrite;
             const options: ExecutionDetailsOption[] = [
               {
@@ -178,15 +182,16 @@ export default function ExecutionDetails({ record, className, onRecordUpdate, on
             setExecutionOptions(options);
             setShowExecutionModal(true);
             setIsAnalyzing(false);
-            // Clear analysis steps after completion
             setTimeout(() => {
               setAnalysisSteps([]);
             }, 5000);
             toast({
               title: "Analysis Complete",
-              description: "Execution details analysis finished successfully",
+              description: "Record analysis finished successfully",
             });
           }
+        }
+
         } else if (data.type === 'error') {
           setError(data.message);
           setIsAnalyzing(false);
@@ -388,12 +393,12 @@ export default function ExecutionDetails({ record, className, onRecordUpdate, on
           setCompletedSteps(prev => new Set([...prev, step.step]));
         }
         
-        if (data.stepType === 'suggestion' && data.data?.suggestions) {
-          setSuggestions(data.data.suggestions);
+      if (data.stepType === 'suggestion') {
+        if (data.data?.suggestions?.length > 0) {
+          setSuggestions(prev => [...prev, ...data.data.suggestions]);
         }
-        
-        if (data.stepType === 'suggestion' && data.data?.executionRewrite) {
-          // Convert single rewrite into 3 options with variations
+
+        if (data.data?.executionRewrite) {
           const baseRewrite = data.data.executionRewrite;
           const options: ExecutionDetailsOption[] = [
             {
@@ -421,7 +426,6 @@ export default function ExecutionDetails({ record, className, onRecordUpdate, on
           setExecutionOptions(options);
           setShowExecutionModal(true);
           setIsAnalyzing(false);
-          // Clear analysis steps after completion
           setTimeout(() => {
             setAnalysisSteps([]);
           }, 5000);
@@ -430,6 +434,9 @@ export default function ExecutionDetails({ record, className, onRecordUpdate, on
             description: "Record analysis finished successfully",
           });
         }
+      }
+
+
       } else if (data.type === 'error') {
         setError(data.message);
         setIsAnalyzing(false);

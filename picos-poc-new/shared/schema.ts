@@ -94,8 +94,19 @@ export interface FieldConfig {
   hide?: boolean;
 }
 
-export const FIELD_PROMPT_CONFIG: any = {
+export const FIELD_PROMPT_CONFIG: Record<string, {
+  label?: string;
+  options?: string[];
+  improvementStyle: 'literal' | 'suggestive' | 'enhance';
+  customPrompt?: string;
+  confidenceThreshold?: number;
+}> = {
   POI_Picklist__c: {
+    improvementStyle: 'literal',
+    customPrompt: `Based on the execution details, what is the most accurate in-store display location (POI) for this activity? 
+      Only choose a value from the allowed list. This field describes where the display or product is located (e.g., Front of Store,
+      End Cap, Beverage Aisle, etc.). If the execution details are ambiguous, do not make assumptions. If the location is clearly
+      stated (e.g., "place in perimeter" or "checkout display"), match to the closest POI value.`,
     options: [
       'Bakery',
       'Beverage Aisle',
@@ -110,32 +121,71 @@ export const FIELD_PROMPT_CONFIG: any = {
       'Pharmacy',
       'Produce',
       'Seasonal',
-      'Wine Adjacency',
+      'Wine Adjacency'
     ],
-    improvementStyle: 'literal'
+    confidenceThreshold: 90
   },
   Activity_type__c: {
-    options: [
-      'Execute',
-      'Sell',
-      'Hunt',
-      'Verify',
-    ],
-    improvementStyle: 'enhance'
+    improvementStyle: 'literal',
+    customPrompt: `Based on the execution details, what kind of activity is being described?
+      Choose only from: Execute, Sell, Hunt, Verify.
+        - Use "Execute" if the activity refers to carrying out a HQ directive or display setup.
+        - Use "Sell" if the activity is about convincing the store to take action or order product.
+        - Use "Hunt" if it's exploratory or chasing whitespace.
+        - Use "Verify" if it involves checking whether something was done.
+      If the current value contradicts this logic, suggest the correct one. Otherwise, do not suggest any change.`,
+    options: ['Execute', 'Sell', 'Hunt', 'Verify'],
+    confidenceThreshold: 90
   },
   Promo_Type__c: {
-    options: [
-      'Buy Get',
-      'Buy Save',
-      'Each',
-      'Must Buy',
-      'Other',
-      'V Simple',
-      'N/A',
-    ],
-    improvementStyle: 'literal'
+    improvementStyle: 'literal',
+    customPrompt: `Review the execution details and determine the type of promotion being run.
+      Choose from: Buy Get, Buy Save, Each, Must Buy, Other, V Simple, N/A.
+      Example mappings:
+        - "Buy 2 Get 1 Free" → Buy Get
+        - "2/$4" or "$5.99 for 12pk" → Buy Save
+        - "Each at $0.99" → Each
+        - "Buy 3 or more for a deal" → Must Buy
+      Be accurate — if no pricing or mechanics are described, return N/A. Only suggest a value if you are confident based on the promo format.`,
+    options: ['Buy Get', 'Buy Save', 'Each', 'Must Buy', 'Other', 'V Simple', 'N/A'],
+    confidenceThreshold: 90
+  },
+  Pricing__c: {
+    improvementStyle: 'suggestive',
+    customPrompt: `Extract the price being promoted in this activity, if mentioned.
+      This could be:
+        - A single item price (e.g., "$1.99")
+        - A bundle price (e.g., "2 for $4", "3/$10")
+        - A tag like "TPR" or "EDV" if that's the only reference
+      If pricing is mentioned in multiple ways, use the clearest and most consumer-facing one. If no pricing is mentioned, skip this field. Return null if nothing price-related is present.`,
+    confidenceThreshold: 90
+  },
+  Package_Detail__c: {
+    improvementStyle: 'suggestive',
+    customPrompt: `Based on the execution details, extract the product packaging format being referenced.
+      Examples:
+        - "12-pack Core CAN"
+        - "6-pack Half Liter"
+        - "20oz PET"
+        - "8pk mini cans"
+      Do NOT include price or location. Only describe the package being featured. If multiple packages are mentioned,
+      choose the most prominent. If no packaging detail is clear, return null.`,
+    confidenceThreshold: 90
+  },
+  Activity_Name__c: {
+    improvementStyle: 'suggestive',
+    customPrompt: `Suggest a concise, action-oriented name for this activity based on the execution details.
+      Good names summarize the key action, brand, or product — not the entire sentence.
+      Examples:
+        - "Fanta Halloween Display"
+        - "Smartwater Summer Promo"
+        - "Coke Mini Can Perimeter Sell-In"
+      Avoid vague names like "Display" or "Promo." Use strong nouns, and include key brand/package terms if available.
+      Keep it under 6–8 words. Only suggest a name if the current one is missing or clearly off-topic.`,
+    confidenceThreshold: 90
   }
-}
+};
+
 
 // Default field configuration - customize this for your use case
 export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
@@ -171,7 +221,7 @@ export const FIELDS_TO_ANALYZE = [
   "POI_Picklist__c",
   "Activity_type__c",
   "Promo_Type__c",
-  // "Pricing__c",
-  // "Package_Detail__c",
-  // "Activity_Name__c"
+  "Pricing__c",
+  "Package_Detail__c",
+  "Activity_Name__c"
 ]

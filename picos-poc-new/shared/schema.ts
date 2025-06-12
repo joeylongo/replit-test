@@ -205,8 +205,8 @@ export const FIELD_PROMPT_CONFIG: Record<string, {
     customPrompt: `
 Suggest the correct marketing program for this activity.
 It is ok if this field is empty. Only suggest a value if you are *ABSOLUTELY POSITIVE* there is a strictly matching promotion.
-The Execution Details should EXPLICITLY mention words that match a promotion in order for you to suggest a value.
-Be strict - if you can't find a strictly matching program from the options available, respond with { "hasSuggestion": false }
+The Execution Details should EXPLICITLY mention words that match a promotion in order for you to suggest a value otherwise respond with { "hasSuggestion": false }
+Be strict - if you can't find a explicitly matching program from the options available, respond with { "hasSuggestion": false }
     `,
     options: programs.map(p => p.Name),
     confidenceThreshold: 90

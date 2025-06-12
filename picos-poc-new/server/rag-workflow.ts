@@ -49,10 +49,12 @@ export interface ExecutionDetailsRewrite {
 export class RAGWorkflow {
   private recordContext: string = "";
   private executionDetails: string = "";
-  private productHierarchy: any = {}
+  private productHierarchys: any[] = []
   async initializeWithRecord(recordData: SalesforceRecordData): Promise<void> {
-    const prodHier = await fetchProductByName(recordData.Package_Detail__c)
-    if(prodHier) this.productHierarchy = prodHier
+    // TODO - split by comman and fetch multiple
+    const packages = recordData.Package_Detail__c?.split(',')?.map(s => s.trim()) || []
+    const prodHiers = await Promise.all(packages.map(p => fetchProductByName(p)))
+    if(prodHiers?.length) this.productHierarchys = prodHiers
 
     const { DEFAULT_FIELD_CONFIG } = await import('../shared/schema');
     const fieldLines = DEFAULT_FIELD_CONFIG.map(field => {
@@ -63,9 +65,9 @@ export class RAGWorkflow {
     this.executionDetails = recordData.Product_Price_Execution_Direction__c || '';
     this.recordContext = `Record Context:
 ${fieldLines}
-${prodHier ? `L1 Product Description: ${prodHier.l1DisplayName}
-L2 Product Description: ${prodHier.l2DisplayName}
-L3 Product Description: ${prodHier.l3DisplayName}`: ''}
+${prodHiers?.length ? `L1 Product Description: ${prodHiers.map(ph => ph?.l1DisplayName)?.join(', ')}
+L2 Product Description: ${prodHiers.map(ph => ph?.l2DisplayName)?.join(', ')}
+L3 Product Description: ${prodHiers.map(ph => ph?.l3DisplayName)?.join(', ')}`: ''}
 
 
 Execution Details: ${this.executionDetails}`.trim();
@@ -253,9 +255,14 @@ Execution Details: ${this.executionDetails}`.trim();
 
   private async rewriteExecutionDetails(recordData: SalesforceRecordData, variationPrompt?: string): Promise<ExecutionDetailsRewrite | null> {
     try {
-      const prompt = createRewriteExecutionDetailsPrompt(recordData, variationPrompt, this.productHierarchy)
-      console.log('rewriteExecutionDetails',prompt)
+      const prompt = createRewriteExecutionDetailsPrompt(recordData, variationPrompt, this.productHierarchys)
+      
 
+      const replacedPrompt = recordData.Package_Detail__c
+            ? prompt.replace(recordData.Package_Detail__c, this.productHierarchys?.join(', ') || recordData.Package_Detail__c)
+            : prompt
+      
+            console.log('rewriteExecutionDetails',replacedPrompt)
       const messages = [
         {
           role: "system",
@@ -273,7 +280,7 @@ Execution Details: ${this.executionDetails}`.trim();
         },
         {
           role: "user",
-          content: prompt
+          content: replacedPrompt
         }
       ];
       const response = await chat(messages, {

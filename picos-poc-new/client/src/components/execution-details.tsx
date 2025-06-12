@@ -154,28 +154,28 @@ export default function ExecutionDetails({ record, className, onRecordUpdate, on
             setSuggestions(prev => [...prev, ...data.data.suggestions]);
           }
 
-          if (data.data?.executionRewrite) {
-            const baseRewrite = data.data.executionRewrite;
+          if (data.data?.executionRewrites) {
+            const baseRewrites = data.data.executionRewrites;
             const options: ExecutionDetailsOption[] = [
               {
                 id: 1,
-                text: baseRewrite.rewrittenText,
-                improvements: baseRewrite.improvements,
-                confidence: baseRewrite.confidence,
+                text: baseRewrites.original.rewrittenText,
+                improvements: baseRewrites.original.improvements,
+                confidence: baseRewrites.original.confidence,
                 isRejected: false
               },
               {
                 id: 2,
-                text: generateVariation(baseRewrite.rewrittenText, 'concise'),
-                improvements: [...baseRewrite.improvements, 'More concise presentation'],
-                confidence: Math.max(0.6, baseRewrite.confidence - 0.1),
+                text: baseRewrites.concise.rewrittenText,
+                improvements: [...baseRewrites.concise.improvements, 'More concise presentation'],
+                confidence: Math.max(0.6, baseRewrites.concise.confidence - 0.1),
                 isRejected: false
               },
               {
                 id: 3,
-                text: generateVariation(baseRewrite.rewrittenText, 'detailed'),
-                improvements: [...baseRewrite.improvements, 'Enhanced detail and context'],
-                confidence: Math.max(0.6, baseRewrite.confidence - 0.05),
+                text: baseRewrites.detailed.rewrittenText,
+                improvements: [...baseRewrites.detailed.improvements, 'Enhanced detail and context'],
+                confidence: Math.max(0.6, baseRewrites.detailed.confidence - 0.05),
                 isRejected: false
               }
             ];
@@ -398,28 +398,28 @@ export default function ExecutionDetails({ record, className, onRecordUpdate, on
           setSuggestions(prev => [...prev, ...data.data.suggestions]);
         }
 
-        if (data.data?.executionRewrite) {
-          const baseRewrite = data.data.executionRewrite;
+        if (data.data?.executionRewrites) {
+          const baseRewrites = data.data.executionRewrites;
           const options: ExecutionDetailsOption[] = [
             {
               id: 1,
-              text: baseRewrite.rewrittenText,
-              improvements: baseRewrite.improvements,
-              confidence: baseRewrite.confidence,
+              text: baseRewrites.original.rewrittenText,
+              improvements: baseRewrites.original.improvements,
+              confidence: baseRewrites.original.confidence,
               isRejected: false
             },
             {
               id: 2,
-              text: generateVariation(baseRewrite.rewrittenText, 'concise'),
-              improvements: [...baseRewrite.improvements, 'More concise presentation'],
-              confidence: Math.max(0.6, baseRewrite.confidence - 0.1),
+              text: baseRewrites.concise.rewrittenText,
+              improvements: [...baseRewrites.concise.improvements, 'More concise presentation'],
+              confidence: Math.max(0.6, baseRewrites.concise.confidence - 0.1),
               isRejected: false
             },
             {
               id: 3,
-              text: generateVariation(baseRewrite.rewrittenText, 'detailed'),
-              improvements: [...baseRewrite.improvements, 'Enhanced detail and context'],
-              confidence: Math.max(0.6, baseRewrite.confidence - 0.05),
+              text: baseRewrites.detailed.rewrittenText,
+              improvements: [...baseRewrites.detailed.improvements, 'Enhanced detail and context'],
+              confidence: Math.max(0.6, baseRewrites.detailed.confidence - 0.05),
               isRejected: false
             }
           ];

@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import programs from '../coke-data/programs'
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -198,6 +199,17 @@ export const FIELD_PROMPT_CONFIG: Record<string, {
       Avoid vague names like "Display" or "Promo." Use strong nouns, and include key brand/package terms if available.
       Keep it under 6–8 words. Only suggest a name if the current one is missing or clearly off-topic.`,
     confidenceThreshold: 90
+  },
+  CCNA_Marketing_or_Innovation_Program__c: {
+    improvementStyle: 'literal',
+    customPrompt: `
+Suggest the correct marketing program for this activity.
+It is ok if this field is empty. Only suggest a value if you are *ABSOLUTELY POSITIVE* there is a strictly matching promotion.
+The Execution Details should EXPLICITLY mention words that match a promotion in order for you to suggest a value.
+Be strict - if you can't find a strictly matching program from the options available, respond with { "hasSuggestion": false }
+    `,
+    options: programs.map(p => p.Name),
+    confidenceThreshold: 90
   }
 };
 
@@ -233,10 +245,11 @@ export const DEFAULT_FIELD_CONFIG: FieldConfig[] = [
 ];
 
 export const FIELDS_TO_ANALYZE = [
-  "POI_Picklist__c",
-  "Activity_type__c",
-  "Promo_Type__c",
-  "Pricing__c",
-  "Package_Detail__c",
-  "Activity_Name__c"
+  'CCNA_Marketing_or_Innovation_Program__c',
+  // "POI_Picklist__c",
+  // "Activity_type__c",
+  // "Promo_Type__c",
+  // "Pricing__c",
+  // "Package_Detail__c",
+  // "Activity_Name__c"
 ]
